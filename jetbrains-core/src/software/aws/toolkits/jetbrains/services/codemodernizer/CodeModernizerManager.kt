@@ -228,14 +228,16 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
         )
     }
 
-    private fun sendValidationResultTelemetry(validationResult: ValidationResult) {
-        if (!validationResult.valid) {
+    private fun sendValidationResultTelemetry(validationResult: ValidationResult, isPreValidationOnIdeStart: Boolean = false) {
+        if (!validationResult.valid && !isPreValidationOnIdeStart) {
             CodetransformTelemetry.isDoubleClickedToTriggerInvalidProject(
                 codeTransformPreValidationError = validationResult.invalidTelemetryReason.category ?: CodeTransformPreValidationError.Unknown,
                 codeTransformSessionId = CodeTransformTelemetryState.instance.getSessionId(),
                 result = Result.Failed,
                 reason = validationResult.invalidTelemetryReason.additonalInfo
             )
+        } else if (!validationResult.valid && isPreValidationOnIdeStart) {
+            LOG.error {"Code modernizer pre validation failed on app startup. ${validationResult.invalidReason}"}
         }
     }
 
@@ -441,10 +443,18 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
     fun tryResumeJob() = projectCoroutineScope(project).launch {
         try {
             val notYetResumed = isResumingJob.compareAndSet(false, true)
-            if (!notYetResumed) return@launch
+            if (!notYetResumed) {
+                return@launch
+            }
 
             LOG.warn { "Attempting to resume job, current state is: $managerState" }
             if (!managerState.flags.getOrDefault(StateFlags.IS_ONGOING, false)) return@launch
+            try {
+                // Try to validate the project on startup
+                sendValidationResultTelemetry(validate(project), true)
+            } catch(e: Exception) {
+                LOG.warn(e) { e.message.toString() }
+            }
             val context = managerState.toSessionContext(project)
             val session = CodeModernizerSession(context)
             val lastJobId = managerState.getLatestJobId()

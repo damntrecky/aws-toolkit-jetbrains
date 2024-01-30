@@ -9,6 +9,7 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
@@ -25,6 +26,12 @@ class TransformMavenRunner(val project: Project) {
                 return@Callback
             }
             handler.addProcessListener(object : ProcessAdapter() {
+                override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+                    println {"------ NARDECK TEST --------"}
+                    println { handler.getUserData(outputType) }
+                    println { "------- EVENT TEXT -------" }
+                    println(event.text) // log output
+                }
                 override fun processTerminated(event: ProcessEvent) {
                     onComplete.exitCode(event.exitCode)
                 }

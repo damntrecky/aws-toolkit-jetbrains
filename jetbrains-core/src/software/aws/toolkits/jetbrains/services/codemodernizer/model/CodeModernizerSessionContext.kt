@@ -160,7 +160,7 @@ data class CodeModernizerSessionContext(
 
     /**
      * @description
-     * this command is used to run the maven commmand which copies all the dependencies to a temp file which we will use to zip our own files to
+     * this command is used to run the maven command which copies all the dependencies to a temp file which we will use to zip our own files to
      */
     fun runMavenCommand(sourceFolder: File): File? {
         val currentTimestamp = System.currentTimeMillis()
