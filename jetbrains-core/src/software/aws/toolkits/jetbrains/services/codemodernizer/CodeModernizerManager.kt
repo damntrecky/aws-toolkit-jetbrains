@@ -146,7 +146,7 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
         val validProjectJdk = project.getSupportedJavaMappingsForProject(supportedJavaMappings).isNotEmpty()
         if (supportedModules.isEmpty() && !validProjectJdk) {
             return ValidationResult(
-                false,
+                true,
                 message("codemodernizer.notification.warn.invalid_project.description.reason.invalid_jdk_versions", supportedJavaMappings.keys.joinToString()),
                 InvalidTelemetryReason(
                     CodeTransformPreValidationError.UnsupportedJavaVersion,
@@ -239,6 +239,11 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
             )
         } else if (!validationResult.valid && isPreValidationOnIdeStart) {
             LOG.error {"Code modernizer pre validation failed on app startup. ${validationResult.invalidReason}"}
+            CodetransformTelemetry.projectDetails(
+                codeTransformPreValidationError = validationResult.invalidTelemetryReason.category ?: CodeTransformPreValidationError.Unknown,
+                result = Result.Failed,
+                reason = validationResult.invalidTelemetryReason.additonalInfo
+            )
         }
     }
 
