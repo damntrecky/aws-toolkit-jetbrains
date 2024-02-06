@@ -237,11 +237,11 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
                 result = Result.Failed,
                 reason = validationResult.invalidTelemetryReason.additonalInfo
             )
-        } else if (!validationResult.valid && isPreValidationOnIdeStart) {
+        } else if (isPreValidationOnIdeStart) {
             LOG.error {"Code modernizer pre validation failed on app startup. ${validationResult.invalidReason}"}
             CodetransformTelemetry.projectDetails(
                 codeTransformPreValidationError = validationResult.invalidTelemetryReason.category ?: CodeTransformPreValidationError.Unknown,
-                result = Result.Failed,
+                result = if (!validationResult.valid) Result.Failed else Result.Succeeded,
                 reason = validationResult.invalidTelemetryReason.additonalInfo
             )
         }
