@@ -5,6 +5,7 @@ package software.aws.toolkits.jetbrains.services.codemodernizer.ideMaven
 
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -26,14 +27,22 @@ class TransformMavenRunner(val project: Project) {
                 return@Callback
             }
             handler.addProcessListener(object : ProcessAdapter() {
+                var output: String = ""
+
                 override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-                    println {"------ NARDECK TEST --------"}
-                    println { handler.getUserData(outputType) }
-                    println { "------- EVENT TEXT -------" }
-                    println(event.text) // log output
+                    when (outputType) {
+                        ProcessOutputTypes.STDOUT -> {
+                            output += event.text
+                        }
+                        ProcessOutputTypes.STDERR -> {
+                            output += event.text
+                        }
+                    }
                 }
+
                 override fun processTerminated(event: ProcessEvent) {
                     onComplete.exitCode(event.exitCode)
+                    onComplete.setOutput(output)
                 }
             })
         }

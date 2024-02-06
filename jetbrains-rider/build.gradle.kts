@@ -20,7 +20,11 @@ buildscript {
     println("Using rd-gen: $rdversion")
 
     dependencies {
-        classpath("com.jetbrains.rd:rd-gen:$rdversion")
+        if (rdversion.contains("pre")) {
+            classpath(fileTree("bin/$rdversion"))
+        } else {
+            classpath("com.jetbrains.rd:rd-gen:$rdversion")
+        }
     }
 }
 
@@ -29,8 +33,8 @@ val ideProfile = IdeVersions.ideProfile(project)
 plugins {
     id("toolkit-kotlin-conventions")
     id("toolkit-testing")
-    id("toolkit-integration-testing")
     id("toolkit-intellij-subplugin")
+    id("toolkit-integration-testing")
 }
 
 intellijToolkit {
@@ -43,7 +47,7 @@ intellij {
 
 sourceSets {
     main {
-        java.srcDirs("$buildDir/generated-src")
+        java.srcDirs(layout.buildDirectory.dir("generated-src"))
     }
 }
 
@@ -91,15 +95,17 @@ val buildConfiguration = project.extra.properties["BuildConfiguration"] ?: "Debu
 // Protocol
 val protocolGroup = "protocol"
 
+// gradle recommends keeping this lazy as long as possible https://docs.gradle.org/current/userguide/upgrading_version_8.html#project_builddir
+val nonLazyBuildDir = layout.buildDirectory.get().asFile
 val csDaemonGeneratedOutput = File(resharperPluginPath, "src/AWS.Daemon/Protocol")
 val csPsiGeneratedOutput = File(resharperPluginPath, "src/AWS.Psi/Protocol")
 val csAwsSettingsGeneratedOutput = File(resharperPluginPath, "src/AWS.Settings/Protocol")
 val csAwsProjectGeneratedOutput = File(resharperPluginPath, "src/AWS.Project/Protocol")
 
-val riderGeneratedSources = File("$buildDir/generated-src/software/aws/toolkits/jetbrains/protocol")
+val riderGeneratedSources = File("$nonLazyBuildDir/generated-src/software/aws/toolkits/jetbrains/protocol")
 
 val modelDir = File(projectDir, "protocol/model")
-val rdgenDir = File("${project.buildDir}/rdgen/")
+val rdgenDir = File("$nonLazyBuildDir/rdgen/")
 
 rdgenDir.mkdirs()
 
@@ -262,7 +268,7 @@ val resharperDllsDir = tasks.register<Sync>("resharperDllsDir") {
         // TODO: see if there is better way to do this
         exclude("**/AWSSDK*")
     }
-    into("$buildDir/$name")
+    into("$nonLazyBuildDir/$name")
 
     includeEmptyDirs = false
 

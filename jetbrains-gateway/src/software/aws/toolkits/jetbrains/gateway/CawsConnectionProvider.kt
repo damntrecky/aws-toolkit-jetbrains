@@ -22,9 +22,10 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Disposer
 import com.intellij.remoteDev.downloader.CodeWithMeClientDownloader
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.layout.panel
 import com.intellij.util.ui.JBFont
 import com.jetbrains.gateway.api.ConnectionRequestor
 import com.jetbrains.gateway.api.GatewayConnectionHandle
@@ -47,7 +48,15 @@ import software.aws.toolkits.core.utils.tryOrNull
 import software.aws.toolkits.core.utils.warn
 import software.aws.toolkits.jetbrains.AwsToolkit
 import software.aws.toolkits.jetbrains.core.awsClient
-import software.aws.toolkits.jetbrains.core.credentials.sono.SonoCredentialManager
+import software.aws.toolkits.jetbrains.core.credentials.AwsBearerTokenConnection
+import software.aws.toolkits.jetbrains.core.credentials.ToolkitConnectionManager
+import software.aws.toolkits.jetbrains.core.credentials.loginSso
+import software.aws.toolkits.jetbrains.core.credentials.logoutFromSsoConnection
+import software.aws.toolkits.jetbrains.core.credentials.pinning.CodeCatalystConnection
+import software.aws.toolkits.jetbrains.core.credentials.sono.CODECATALYST_SCOPES
+import software.aws.toolkits.jetbrains.core.credentials.sono.CodeCatalystCredentialManager
+import software.aws.toolkits.jetbrains.core.credentials.sono.SONO_REGION
+import software.aws.toolkits.jetbrains.core.credentials.sono.SONO_URL
 import software.aws.toolkits.jetbrains.core.credentials.sono.lazilyGetUserId
 import software.aws.toolkits.jetbrains.core.utils.buildList
 import software.aws.toolkits.jetbrains.gateway.connection.GET_IDE_BACKEND_VERSION_COMMAND
@@ -71,13 +80,13 @@ import software.aws.toolkits.jetbrains.utils.execution.steps.StepExecutor
 import software.aws.toolkits.jetbrains.utils.execution.steps.StepWorkflow
 import software.aws.toolkits.resources.message
 import software.aws.toolkits.telemetry.CodecatalystTelemetry
+import java.net.URLDecoder
 import java.time.Duration
 import java.util.UUID
 import javax.swing.JLabel
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
-import com.intellij.ui.dsl.builder.panel as panelv2
 import software.aws.toolkits.telemetry.Result as TelemetryResult
 
 @ExperimentalTime
@@ -98,8 +107,32 @@ class CawsConnectionProvider : GatewayConnectionProvider {
             return null
         }
 
+        val currentConnection = ToolkitConnectionManager.getInstance(null).activeConnectionForFeature(CodeCatalystConnection.getInstance())
+            as AwsBearerTokenConnection?
+
+        val ssoSettings = connectionParams.ssoSettings ?: SsoSettings(SONO_URL, SONO_REGION)
+
+        if (currentConnection != null) {
+            if (ssoSettings.startUrl != currentConnection.startUrl) {
+                val ans = Messages.showOkCancelDialog(
+                    message("gateway.auth.different.account.required", ssoSettings.startUrl),
+                    message("gateway.auth.different.account.sign.in"),
+                    message("caws.login"),
+                    message("general.cancel"),
+                    Messages.getErrorIcon(),
+                    null
+                )
+                if (ans == Messages.OK) {
+                    logoutFromSsoConnection(project = null, currentConnection)
+                    loginSso(project = null, ssoSettings.startUrl, ssoSettings.region, CODECATALYST_SCOPES)
+                } else {
+                    return null
+                }
+            }
+        }
+
         val connectionSettings = try {
-            SonoCredentialManager.getInstance().getSettingsAndPromptAuth()
+            CodeCatalystCredentialManager.getInstance().getConnectionSettings() ?: error("Unable to find connection settings")
         } catch (e: ProcessCanceledException) {
             return null
         }
@@ -289,7 +322,7 @@ class CawsConnectionProvider : GatewayConnectionProvider {
                                 runInEdt {
                                     DialogBuilder().apply {
                                         setCenterPanel(
-                                            panelv2 {
+                                            panel {
                                                 row {
                                                     icon(AllIcons.General.ErrorDialog).verticalAlign(VerticalAlign.TOP)
 
@@ -345,7 +378,8 @@ class CawsConnectionProvider : GatewayConnectionProvider {
 
                 return@let panel {
                     row {
-                        view(grow)
+                        cell(view)
+                            .align(Align.FILL)
                     }
                 }
             }
@@ -503,6 +537,7 @@ data class CawsConnectionParameters(
     val envId: String,
     val gitSettings: GitSettings,
     val toolkitInstallSettings: ToolkitInstallSettings,
+    val ssoSettings: SsoSettings?
 ) {
     companion object {
         const val CAWS_SPACE = "aws.codecatalyst.space"
@@ -514,6 +549,8 @@ data class CawsConnectionParameters(
         const val DEV_SETTING_USE_BUNDLED_TOOLKIT = "aws.caws.dev.use.bundled.toolkit"
         const val DEV_SETTING_TOOLKIT_PATH = "aws.caws.dev.toolkit.path"
         const val DEV_SETTING_S3_STAGING = "aws.caws.dev.s3.staging"
+        const val SSO_START_URL = "sso_start_url"
+        const val SSO_REGION = "sso_region"
 
         fun fromParameters(parameters: Map<String, String>): CawsConnectionParameters {
             val spaceName = parameters[CAWS_SPACE] ?: error("Missing required parameter: CAWS space name")
@@ -525,6 +562,8 @@ data class CawsConnectionParameters(
             val useBundledToolkit = parameters[DEV_SETTING_USE_BUNDLED_TOOLKIT]?.toBoolean()
             val toolkitPath = parameters[DEV_SETTING_TOOLKIT_PATH]
             val s3StagingBucket = parameters[DEV_SETTING_S3_STAGING]
+            val ssoStartUrl = parameters[SSO_START_URL]
+            val ssoRegion = parameters[SSO_REGION]
 
             val gitSettings =
                 if (repoName != null) {
@@ -544,13 +583,29 @@ data class CawsConnectionParameters(
                     ToolkitInstallSettings.UseMarketPlace
                 }
 
+            val ssoSettings = if (ssoStartUrl != null && ssoRegion != null) {
+                SsoSettings.fromUrlParameters(ssoStartUrl, ssoRegion)
+            } else {
+                null
+            }
+
             return CawsConnectionParameters(
                 spaceName,
                 projectName,
                 envId,
                 gitSettings,
-                providedInstallSettings
+                providedInstallSettings,
+                ssoSettings
             )
         }
+    }
+}
+
+data class SsoSettings(
+    val startUrl: String,
+    val region: String
+) {
+    companion object {
+        fun fromUrlParameters(startUrl: String, region: String) = SsoSettings(URLDecoder.decode(startUrl, "UTF-8"), region)
     }
 }
