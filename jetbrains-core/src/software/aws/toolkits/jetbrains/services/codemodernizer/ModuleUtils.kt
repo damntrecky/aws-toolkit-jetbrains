@@ -19,6 +19,7 @@ import software.aws.toolkits.core.utils.warn
  */
 fun Module.tryGetJdk(project: Project): JavaSdkVersion? {
     val sdk = ModuleRootManager.getInstance(this).sdk ?: ProjectRootManager.getInstance(project).projectSdk ?: return null
+    CodeModernizerManager.LOG.warn { " test something ${sdk}" }
     val javaSdk = JavaSdkImpl.getInstance()
     return javaSdk.getVersion(sdk)
 }

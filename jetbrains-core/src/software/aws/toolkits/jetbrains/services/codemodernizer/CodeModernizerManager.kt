@@ -144,14 +144,16 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
         }
         val supportedModules = getSupportedModulesInProject().toSet()
         if (supportedModules.isEmpty() && project.tryGetJdk() == null) {
-            return ValidationResult(
-                true,
-                message("codemodernizer.notification.warn.invalid_project.description.reason.invalid_jdk_versions", supportedJavaMappings.keys.joinToString()),
-                InvalidTelemetryReason(
-                    CodeTransformPreValidationError.UnsupportedJavaVersion,
-                    project.tryGetJdk().toString()
-                )
-            )
+//            TODO: We let users choose the Java version, so we should log details here and continue on. The main check we care
+            // about is that the users have valid build files like pom.xml
+//            return ValidationResult(
+//                false,
+//                message("codemodernizer.notification.warn.invalid_project.description.reason.invalid_jdk_versions", supportedJavaMappings.keys.joinToString()),
+//                InvalidTelemetryReason(
+//                    CodeTransformPreValidationError.UnsupportedJavaVersion,
+//                    project.tryGetJdk().toString()
+//                )
+//            )
         }
         val validatedBuildFiles = project.getSupportedBuildModules(supportedBuildFileNames)
         return if (validatedBuildFiles.isNotEmpty()) {
