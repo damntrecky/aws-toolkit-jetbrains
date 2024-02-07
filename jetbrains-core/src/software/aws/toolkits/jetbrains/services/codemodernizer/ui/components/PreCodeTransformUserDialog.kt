@@ -81,7 +81,6 @@ class PreCodeTransformUserDialog(
         fun supportedJdkForModuleOrProject(module: Module?): List<String> {
             val jdk = if (module != null) {
 //                getSupportedJavaVersions(module)
-//                module.tryGetJdk(project).toString()
                 listOf(module.tryGetJdk(project).toString())
             } else {
                 supportedJavaMappings.keys.map { it.toString() }

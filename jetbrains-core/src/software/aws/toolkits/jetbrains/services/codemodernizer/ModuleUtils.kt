@@ -24,25 +24,11 @@ fun Module.tryGetJdk(project: Project): JavaSdkVersion? {
 }
 
 /**
- * @description Try to get the project SDK version from the "project structure" settings
- */
-//fun Project.getSupportedJavaMappingsForProject(supportedJavaMappings: Map<JavaSdkVersion, Set<JavaSdkVersion>>): List<String> {
-//    val projectSdk = ProjectRootManager.getInstance(this).projectSdk
-//    val javaSdk = JavaSdkImpl.getInstance()
-//    return if (projectSdk == null) {
-//        listOf()
-//    } else {
-//        supportedJavaMappings.getOrDefault(javaSdk.getVersion(projectSdk), listOf()).map { it.name }.toList()
-//    }
-//}
-
-/**
  * @description Strategy:
  * 1. Find folders with pom.xml or build.gradle.kts or build.gradle
  * 2. Filter out subdirectories
  */
 fun Project.getSupportedBuildModules(supportedBuildFileNames: List<String>): List<VirtualFile> {
-
     val projectRootManager = ProjectRootManager.getInstance(this)
     val probableProjectRoot = this.basePath?.toVirtualFile() // May point to only one intellij module (the first opened one)
     val probableContentRoots = projectRootManager.contentRoots.toMutableSet() // May not point to the topmost folder of modules
@@ -52,7 +38,6 @@ fun Project.getSupportedBuildModules(supportedBuildFileNames: List<String>): Lis
         findBuildFiles(root.toNioPath().toFile(), supportedBuildFileNames).mapNotNull { it.path.toVirtualFile() }
     }
 
-    CodeModernizerManager.LOG.warn { "detected build files ${detectedBuildFiles}"}
     return detectedBuildFiles
 }
 
