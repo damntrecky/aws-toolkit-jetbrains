@@ -20,6 +20,8 @@ import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.toMutableProperty
+import software.aws.toolkits.core.utils.warn
+import software.aws.toolkits.jetbrains.services.codemodernizer.CodeModernizerManager
 import software.aws.toolkits.jetbrains.services.codemodernizer.model.CustomerSelection
 import software.aws.toolkits.jetbrains.services.codemodernizer.state.CodeTransformTelemetryState
 import software.aws.toolkits.jetbrains.services.codemodernizer.tryGetJdk
@@ -100,6 +102,9 @@ class PreCodeTransformUserDialog(
             supportedMigrationPaths = supportedJavaVersions,
         )
 
+        CodeModernizerManager.LOG.warn {" validatedBuildFiles in preCodeTransformUserDialog() fnc: ${buildfiles}"}
+        CodeModernizerManager.LOG.warn {" supportedJavaMappings in preCodeTransformUserDialog() fnc: ${supportedJavaMappings}"}
+
         dialogPanel = panel {
             row { text(message("codemodernizer.customerselectiondialog.description.main")) }
             row { text(message("codemodernizer.customerselectiondialog.description.select")) }
@@ -113,7 +118,6 @@ class PreCodeTransformUserDialog(
                     dialogPanel.apply() // apply user changes to model
                     model.focusedBuildFile = buildfiles[model.focusedBuildFileIndex]
                     model.focusedBuildFileModule = ModuleUtil.findModuleForFile(buildfiles[model.focusedBuildFileIndex], project)
-                    model.supportedMigrationPaths = supportedJdkForModuleOrProject(model.focusedBuildFileModule)
                     dialogPanel.reset() // present model changes to user
                 }
                 buildFileComboBox.addActionListener {
@@ -132,6 +136,7 @@ class PreCodeTransformUserDialog(
                     .component
                 javaInputSdkComboBox.whenItemSelected {
                     dialogPanel.apply() // apply user changes to model
+//                    model.supportedMigrationPaths = supportedJdkForModuleOrProject(model.focusedBuildFileModule)
                     dialogPanel.reset() // present model changes to user
                 }
             }

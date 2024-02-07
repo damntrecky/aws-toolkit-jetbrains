@@ -228,19 +228,12 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
         )
     }
 
-    private fun sendValidationResultTelemetry(validationResult: ValidationResult, isPreValidationOnIdeStart: Boolean = false) {
-        if (!validationResult.valid && !isPreValidationOnIdeStart) {
+    private fun sendValidationResultTelemetry(validationResult: ValidationResult) {
+        if (!validationResult.valid) {
             CodetransformTelemetry.isDoubleClickedToTriggerInvalidProject(
                 codeTransformPreValidationError = validationResult.invalidTelemetryReason.category ?: CodeTransformPreValidationError.Unknown,
                 codeTransformSessionId = CodeTransformTelemetryState.instance.getSessionId(),
                 result = Result.Failed,
-                reason = validationResult.invalidTelemetryReason.additonalInfo
-            )
-        } else if (isPreValidationOnIdeStart) {
-            LOG.error {"Code modernizer pre validation failed on app startup. ${validationResult.invalidReason}"}
-            CodetransformTelemetry.projectDetails(
-                codeTransformPreValidationError = validationResult.invalidTelemetryReason.category ?: CodeTransformPreValidationError.Unknown,
-                result = if (!validationResult.valid) Result.Failed else Result.Succeeded,
                 reason = validationResult.invalidTelemetryReason.additonalInfo
             )
         }
@@ -454,12 +447,6 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
 
             LOG.info { "Attempting to resume job, current state is: $managerState" }
             if (!managerState.flags.getOrDefault(StateFlags.IS_ONGOING, false)) return@launch
-            try {
-                // Try to validate the project on startup
-                sendValidationResultTelemetry(validate(project), true)
-            } catch(e: Exception) {
-                LOG.warn(e) { e.message.toString() }
-            }
             val context = managerState.toSessionContext(project)
             val session = CodeModernizerSession(context)
             val lastJobId = managerState.getLatestJobId()
