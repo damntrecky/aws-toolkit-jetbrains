@@ -38,6 +38,7 @@ class PreCodeTransformUserDialog(
         var focusedBuildFileIndex: Int,
         var focusedBuildFile: VirtualFile?,
         var selectedMigrationPath: String?,
+        var focusedJavaInputIndex: Int,
         var supportedMigrationPaths: List<String>,
         var focusedBuildFileModule: Module?,
     )
@@ -48,9 +49,12 @@ class PreCodeTransformUserDialog(
     fun create(): CustomerSelection? {
         lateinit var dialogPanel: DialogPanel
         lateinit var buildFileComboBox: ComboBox<String>
+        lateinit var javaInputSdkComboBox: ComboBox<String>
 
         val buildfiles = supportedBuildFilesInProject
+        val javaTransformInputSdks = supportedJavaMappings.keys.map { it.toString() }
         var focusedModuleIndex = 0
+        var focusedJavaInputIndex = 0
         var chosenBuildFile = buildfiles.firstOrNull()
         val chosenFile = FileEditorManager.getInstance(project).selectedEditor?.file
 
@@ -88,6 +92,7 @@ class PreCodeTransformUserDialog(
             focusedBuildFileIndex = focusedModuleIndex,
             focusedBuildFile = chosenBuildFile,
             focusedBuildFileModule = chosenModule,
+            focusedJavaInputIndex = focusedJavaInputIndex,
             selectedMigrationPath = supportedJavaVersions.firstOrNull(),
             supportedMigrationPaths = supportedJavaVersions,
         )
@@ -112,6 +117,18 @@ class PreCodeTransformUserDialog(
                     CodetransformTelemetry.configurationFileSelectedChanged(
                         codeTransformSessionId = CodeTransformTelemetryState.instance.getSessionId()
                     )
+                }
+            }
+            row { text("Select Java SDK for Module") }
+            row {
+                javaInputSdkComboBox = comboBox(javaTransformInputSdks.map { it })
+                    .bind({ it.selectedIndex }, { t, v -> t.selectedIndex = v }, model::focusedJavaInputIndex.toMutableProperty())
+                    .align(AlignX.FILL)
+                    .columns(COLUMNS_MEDIUM)
+                    .component
+                buildFileComboBox.whenItemSelected {
+                    dialogPanel.apply() // apply user changes to model
+                    dialogPanel.reset() // present model changes to user
                 }
             }
             row {
