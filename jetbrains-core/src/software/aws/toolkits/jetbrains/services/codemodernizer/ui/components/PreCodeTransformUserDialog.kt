@@ -20,7 +20,6 @@ import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.toMutableProperty
-import software.aws.toolkits.jetbrains.services.codemodernizer.getSupportedJavaMappingsForProject
 import software.aws.toolkits.jetbrains.services.codemodernizer.model.CustomerSelection
 import software.aws.toolkits.jetbrains.services.codemodernizer.state.CodeTransformTelemetryState
 import software.aws.toolkits.jetbrains.services.codemodernizer.tryGetJdk
@@ -75,12 +74,17 @@ class PreCodeTransformUserDialog(
             chosenModule = ModuleUtil.findModuleForFile(chosenBuildFile, project)
         }
 
-        // Detect the supported migration path for the module, revert to project default if file not part of module.
+        /**
+         * @description Try to smart detect the Java version, if none or an unsupported version
+         * we should display the supported Java list versions of 8 and 11.
+         */
         fun supportedJdkForModuleOrProject(module: Module?): List<String> {
             val jdk = if (module != null) {
-                getSupportedJavaVersions(module)
+//                getSupportedJavaVersions(module)
+//                module.tryGetJdk(project).toString()
+                listOf(module.tryGetJdk(project).toString())
             } else {
-                project.getSupportedJavaMappingsForProject(supportedJavaMappings)
+                supportedJavaMappings.keys.map { it.toString() }
             }
             return jdk.map { it.replace("_", " ") }
         }
@@ -119,14 +123,15 @@ class PreCodeTransformUserDialog(
                     )
                 }
             }
-            row { text("Select Java SDK for Module") }
+            row { text("We detected ${model.selectedMigrationPath}" ?: "We are unable to find a supported Java version") }
+            row { text("Select supported JDK for transformation") }
             row {
                 javaInputSdkComboBox = comboBox(javaTransformInputSdks.map { it })
                     .bind({ it.selectedIndex }, { t, v -> t.selectedIndex = v }, model::focusedJavaInputIndex.toMutableProperty())
                     .align(AlignX.FILL)
                     .columns(COLUMNS_MEDIUM)
                     .component
-                buildFileComboBox.whenItemSelected {
+                javaInputSdkComboBox.whenItemSelected {
                     dialogPanel.apply() // apply user changes to model
                     dialogPanel.reset() // present model changes to user
                 }

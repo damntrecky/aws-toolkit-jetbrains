@@ -143,8 +143,7 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
             )
         }
         val supportedModules = getSupportedModulesInProject().toSet()
-        val validProjectJdk = project.getSupportedJavaMappingsForProject(supportedJavaMappings).isNotEmpty()
-        if (supportedModules.isEmpty() && !validProjectJdk) {
+        if (supportedModules.isEmpty() && project.tryGetJdk() == null) {
             return ValidationResult(
                 true,
                 message("codemodernizer.notification.warn.invalid_project.description.reason.invalid_jdk_versions", supportedJavaMappings.keys.joinToString()),
@@ -154,7 +153,7 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
                 )
             )
         }
-        val validatedBuildFiles = getSupportedBuildFilesInProject()
+        val validatedBuildFiles = project.getSupportedBuildModules(supportedBuildFileNames)
         return if (validatedBuildFiles.isNotEmpty()) {
             ValidationResult(true, validatedBuildFiles = validatedBuildFiles)
         } else {
@@ -664,55 +663,11 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
         managerState.flags.putAll(state.flags)
     }
 
-    private fun findBuildFiles(sourceFolder: File): List<File> {
-        /**
-         * For every dir, check if any supported build files (pom.xml etc) exists.
-         * If found store it and stop further recursion.
-         */
-        val buildFiles = mutableListOf<File>()
-        sourceFolder.walkTopDown()
-            .maxDepth(5)
-            .onEnter { currentDir ->
-                supportedBuildFileNames.forEach {
-                    val maybeSupportedFile = currentDir.resolve(MAVEN_CONFIGURATION_FILE_NAME)
-                    if (maybeSupportedFile.exists()) {
-                        buildFiles.add(maybeSupportedFile)
-                        return@onEnter false
-                    }
-                }
-                return@onEnter true
-            }.forEach {
-                // noop, collects the sequence
-            }
-        return buildFiles
-    }
-
-    private fun getSupportedBuildFilesInProject(): List<VirtualFile> {
-        /**
-         * Strategy:
-         * 1. Find folders with pom.xml or build.gradle.kts or build.gradle
-         * 2. Filter out subdirectories
-         */
-        val projectRootManager = ProjectRootManager.getInstance(project)
-        val probableProjectRoot = project.basePath?.toVirtualFile() // May point to only one intellij module (the first opened one)
-        val probableContentRoots = projectRootManager.contentRoots.toMutableSet() // May not point to the topmost folder of modules
-        probableContentRoots.add(probableProjectRoot) // dedupe
-        val topLevelRoots = filterOnlyParentFiles(probableContentRoots)
-        val detectedBuildFiles = topLevelRoots.flatMap { root ->
-            findBuildFiles(root.toNioPath().toFile()).mapNotNull { it.path.toVirtualFile() }
-        }
-
-        val supportedModules = getSupportedModulesInProject().toSet()
-        val validProjectJdk = project.getSupportedJavaMappingsForProject(supportedJavaMappings).isNotEmpty()
-        return detectedBuildFiles.filter {
-            val moduleOfFile = runReadAction { projectRootManager.fileIndex.getModuleForFile(it) }
-            return@filter (moduleOfFile in supportedModules) || (moduleOfFile == null && validProjectJdk)
-        }
-    }
-
+    /**
+     * @description Currently gets all the Java modules in the current workspace.
+     */
     private fun getSupportedModulesInProject() = project.modules.filter {
-        val moduleJdk = it.tryGetJdk(project) ?: return@filter false
-        moduleJdk in supportedJavaMappings
+        return if (it.tryGetJdk(project) != null) return@filter true else return@filter false
     }
 
     fun warnUnsupportedProject(reason: String?) {
