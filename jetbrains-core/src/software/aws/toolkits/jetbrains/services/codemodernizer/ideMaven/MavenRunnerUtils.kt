@@ -84,7 +84,7 @@ fun runMavenCopyCommands(sourceFolder: File, buildlogBuilder: StringBuilder, log
     return MavenCopyCommandsResult.Success(destinationDir.toFile())
 }
 
-private fun runMavenCopyDependencies(
+fun runMavenCopyDependencies(
     sourceFolder: File,
     buildlogBuilder: StringBuilder,
     mvnSettings: MavenRunnerSettings,

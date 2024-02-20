@@ -203,6 +203,7 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
 
     fun validateAndStart(srcStartComponent: CodeTransformStartSrcComponents = CodeTransformStartSrcComponents.DevToolsStartButton) =
         projectCoroutineScope(project).launch {
+            testHILExperience()
             sendUserClickedTelemetry(srcStartComponent)
             if (isModernizationInProgress.getAndSet(true)) return@launch
             val validationResult = validate(project)
@@ -216,6 +217,15 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
                 }
             }
         }
+
+    fun testHILExperience()
+    {
+        LOG.warn { "Starting testHILExperience Function"}
+        val jarDependency1pHandler = JarDependency1pHandler(project)
+        val tempPomFile = jarDependency1pHandler.extractCurrentPomToTempDirectory()
+        LOG.warn { "Temp POM File path ${tempPomFile.absolutePath}"}
+        jarDependency1pHandler.runMavenCommandsOnTempPom()
+    }
 
     private fun sendUserClickedTelemetry(srcStartComponent: CodeTransformStartSrcComponents) {
         CodeTransformTelemetryState.instance.setSessionId()
