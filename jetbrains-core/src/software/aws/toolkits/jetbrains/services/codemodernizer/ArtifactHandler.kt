@@ -133,15 +133,14 @@ class ArtifactHandler(private val project: Project, private val clientAdaptor: G
                 patchFile,
                 null,
                 ChangeListManager.getInstance(project)
-                    .addChangeList("This is your default commit title", "This is your default commit sub text. Clicking on 'ok' will apply all selected changes"),
-//                    .addChangeList(message("codemodernizer.patch.name"), ""),
+                    .addChangeList(message("codemodernizer.patch.name"), "DELETE ME: This is your default commit sub text. Clicking on 'ok' will apply all selected changes"),
                 null,
                 null,
                 null,
                 false,
             )
             dialog.isModal = true
-            dialog.title = "Nicks crazy test. The text comment is a commit message and name is commit title and the ok button is applying the changes to the selected files"
+            dialog.title = "Apply diff changes to files (double click files to open diff)"
             dialog.isResizable = true
 
             CodetransformTelemetry.vcsDiffViewerVisible(
