@@ -17,6 +17,7 @@ import software.aws.toolkits.core.utils.error
 import software.aws.toolkits.core.utils.exists
 import software.aws.toolkits.core.utils.getLogger
 import software.aws.toolkits.core.utils.info
+import software.aws.toolkits.core.utils.warn
 import software.aws.toolkits.jetbrains.core.coroutines.projectCoroutineScope
 import software.aws.toolkits.jetbrains.services.codemodernizer.client.GumbyClient
 import software.aws.toolkits.jetbrains.services.codemodernizer.model.CodeModernizerArtifact
@@ -122,7 +123,7 @@ class ArtifactHandler(private val project: Project, private val clientAdaptor: G
     /**
      * Opens the built-in patch dialog to display the diff and allowing users to apply the changes locally.
      */
-    internal fun displayDiffUsingPatch(patchFile: VirtualFile, jobId: JobId) {
+    fun displayDiffUsingPatch(patchFile: VirtualFile, jobId: JobId) {
         runInEdt {
             val dialog = ApplyPatchDifferentiatedDialog(
                 project,
@@ -132,26 +133,30 @@ class ArtifactHandler(private val project: Project, private val clientAdaptor: G
                 patchFile,
                 null,
                 ChangeListManager.getInstance(project)
-                    .addChangeList(message("codemodernizer.patch.name"), ""),
+                    .addChangeList("This is your default commit title", "This is your default commit sub text. Clicking on 'ok' will apply all selected changes"),
+//                    .addChangeList(message("codemodernizer.patch.name"), ""),
                 null,
                 null,
                 null,
                 false,
             )
             dialog.isModal = true
+            dialog.title = "Nicks crazy test. The text comment is a commit message and name is commit title and the ok button is applying the changes to the selected files"
+            dialog.isResizable = true
 
             CodetransformTelemetry.vcsDiffViewerVisible(
                 codeTransformSessionId = CodeTransformTelemetryState.instance.getSessionId(),
                 codeTransformJobId = jobId.id
             )
-
             if (dialog.showAndGet()) {
+                LOG.warn { "Patch applied" }
                 CodetransformTelemetry.vcsViewerSubmitted(
                     codeTransformSessionId = CodeTransformTelemetryState.instance.getSessionId(),
                     codeTransformJobId = jobId.id,
                     codeTransformStatus = CodeModernizerSessionState.getInstance(project).currentJobStatus.toString()
                 )
             } else {
+                LOG.warn { "Patch canceled" }
                 CodetransformTelemetry.vcsViewerCanceled(
                     codeTransformPatchViewerCancelSrcComponents = CodeTransformPatchViewerCancelSrcComponents.CancelButton,
                     codeTransformSessionId = CodeTransformTelemetryState.instance.getSessionId(),

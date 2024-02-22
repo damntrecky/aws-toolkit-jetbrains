@@ -493,6 +493,9 @@ class CodeModernizerSummaryEditor(val project: Project, val virtualFile: Virtual
                 </head>
                 <body class="markdown-body">
                     $bodyContents
+                    1. We need a filePath to virtualFile created or downloaded
+                    2. Will do some conversions to insert into summary view/markdown file
+                    if (bodyContent === "NextSteps) insertAnchorTagBefore
                 </body>
             </html>
         """.trimIndent()

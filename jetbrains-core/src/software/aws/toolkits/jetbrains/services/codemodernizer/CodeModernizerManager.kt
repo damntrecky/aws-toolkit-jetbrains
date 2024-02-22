@@ -16,7 +16,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.ToolWindowManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -69,6 +71,8 @@ import software.aws.toolkits.telemetry.CodeTransformPreValidationError
 import software.aws.toolkits.telemetry.CodeTransformStartSrcComponents
 import software.aws.toolkits.telemetry.CodetransformTelemetry
 import software.aws.toolkits.telemetry.Result
+import java.io.File
+import java.nio.file.Files
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
@@ -201,8 +205,23 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
         codeModernizerBottomWindowPanelManager.setJobStartingUI()
     }
 
+    fun getVirtualFileFromReference(file: File): VirtualFile? {
+        val fileUrl = file.toURI().toURL()
+        return VirtualFileManager.getInstance().findFileByUrl(fileUrl.toString())
+    }
+
     fun validateAndStart(srcStartComponent: CodeTransformStartSrcComponents = CodeTransformStartSrcComponents.DevToolsStartButton) =
         projectCoroutineScope(project).launch {
+            val tempDir = FileUtil.createTempDirectory("codeTransformJarArtifacts", null)
+            val tmpPomPath = "pom.xml"
+            val pomPath = tempDir.toPath().resolve(tmpPomPath)
+            val pomFile = pomPath.toFile()
+            pomFile.writeText("")
+            val pomVirtualFile= VirtualFileManager.getInstance().findFileByNioPath(pomPath)
+            LOG.warn { "Inside validate and start ${pomVirtualFile}" }
+            if (pomVirtualFile != null) {
+                artifactHandler.displayDiffUsingPatch(pomVirtualFile, JobId("test-id"))
+            }
             sendUserClickedTelemetry(srcStartComponent)
             if (isModernizationInProgress.getAndSet(true)) return@launch
             val validationResult = validate(project)
@@ -216,6 +235,7 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
                 }
             }
         }
+
 
     private fun sendUserClickedTelemetry(srcStartComponent: CodeTransformStartSrcComponents) {
         CodeTransformTelemetryState.instance.setSessionId()
