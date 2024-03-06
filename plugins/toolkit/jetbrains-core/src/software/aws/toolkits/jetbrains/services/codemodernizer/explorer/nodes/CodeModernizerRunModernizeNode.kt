@@ -27,7 +27,8 @@ class CodeModernizerRunModernizeNode(private val nodeProject: Project) : CodeWhi
 
     override fun onDoubleClick(event: MouseEvent) {
         if (!codeModernizerManager.isModernizationJobActive()) {
-            codeModernizerManager.validateAndStart(CodeTransformStartSrcComponents.DevToolsStartButton)
+            if (true) codeModernizerManager.diffViewTest()
+            else codeModernizerManager.validateAndStart(CodeTransformStartSrcComponents.DevToolsStartButton)
         } else {
             codeModernizerManager.stopModernize()
         }

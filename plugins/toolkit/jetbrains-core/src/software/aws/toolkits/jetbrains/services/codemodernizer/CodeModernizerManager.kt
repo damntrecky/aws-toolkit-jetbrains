@@ -56,6 +56,7 @@ import software.aws.toolkits.jetbrains.services.codemodernizer.toolwindow.CodeMo
 import software.aws.toolkits.jetbrains.services.codemodernizer.ui.components.BuildErrorDialog
 import software.aws.toolkits.jetbrains.services.codemodernizer.ui.components.PreCodeTransformUserDialog
 import software.aws.toolkits.jetbrains.services.codemodernizer.ui.components.ValidationErrorDialog
+import software.aws.toolkits.jetbrains.services.codemodernizer.vcs.PomDiffViewer
 import software.aws.toolkits.jetbrains.utils.isRunningOnRemoteBackend
 import software.aws.toolkits.jetbrains.utils.notifyStickyError
 import software.aws.toolkits.jetbrains.utils.notifyStickyInfo
@@ -197,6 +198,20 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
         // Initialize the bottom toolkit window with content
         addCodeModernizeUI(shouldOpenBottomWindowOnStart, moduleOrProjectNameForFile)
         codeModernizerBottomWindowPanelManager.setJobStartingUI()
+    }
+
+    fun diffViewTest() {
+        val pomFile1 = "/Users/nardeck/workplace/gumby-prod/aws-toolkit-jetbrains/plugins/toolkit/jetbrains-core/src/software/aws/toolkits/jetbrains/services/codemodernizer/vcs/pom1.xml"
+        val pomFile2 = "/Users/nardeck/workplace/gumby-prod/aws-toolkit-jetbrains/plugins/toolkit/jetbrains-core/src/software/aws/toolkits/jetbrains/services/codemodernizer/vcs/pom2.xml"
+
+        val pomDiffViewer = PomDiffViewer(project)
+        pomDiffViewer.createDiffView(pomFile1, pomFile2)
+
+
+        // create custom editor file
+        pomDiffViewer.createCustomEditor()
+
+        pomDiffViewer.showDiff()
     }
 
     fun validateAndStart(srcStartComponent: CodeTransformStartSrcComponents = CodeTransformStartSrcComponents.DevToolsStartButton) =
