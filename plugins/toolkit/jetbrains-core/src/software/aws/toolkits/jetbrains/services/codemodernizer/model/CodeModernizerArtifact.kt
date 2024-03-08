@@ -99,8 +99,10 @@ open class CodeModernizerArtifact(
             if (!patchesDir.isDirectory()) {
                 throw RuntimeException("Expected root for patches was not a directory.")
             }
+            // if this is UI thread
+            // calling invoke () or just doing refreshAndFindFile (all VFS operations)
             return patchesDir.walk()
-                .map { fileSystem.findFileByNioFile(it) ?: throw RuntimeException("Could not find patch") }
+                .map { fileSystem.refreshAndFindFileByNioFile(it) ?: throw RuntimeException("Could not find patch") }
                 .toList()
         }
     }
