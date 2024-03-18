@@ -210,7 +210,7 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
         // create custom editor file
         pomDiffViewer.showCustomEditor()
 
-//        pomDiffViewer.showDiff()
+        pomDiffViewer.showDiff()
     }
 
     fun validateAndStart(srcStartComponent: CodeTransformStartSrcComponents = CodeTransformStartSrcComponents.DevToolsStartButton) =

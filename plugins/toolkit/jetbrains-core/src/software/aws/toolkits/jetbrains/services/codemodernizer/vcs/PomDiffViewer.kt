@@ -79,8 +79,8 @@ class PomDiffViewer(private val project: Project) {
         try {
             val diffManager = DiffManager.getInstance()
             diffManager.showDiff(project, diffRequest)
-        } catch(error: Error) {
-            println("Error in showDiff(): Could now show diff view ${error}")
+        } catch (error: Error) {
+            println("Error in showDiff(): Could now show diff view $error")
         }
     }
 
@@ -96,8 +96,8 @@ class PomDiffViewer(private val project: Project) {
 
             // We apply the editor changes to file
             highlightRange(editor, document, 6)
-            highlightLine(editor, document, 15)
-            addGutterIconToLine(editor, document, 12)
+            addGutterIconToLine(editor, document, 15)
+//            addGutterIconToLine(editor, document, 12)
         }
     }
 
@@ -116,7 +116,7 @@ class PomDiffViewer(private val project: Project) {
             Font.BOLD
         )
 
-        val startOffset = document.getLineStartOffset(lineNumberToHighlight-1)
+        val startOffset = document.getLineStartOffset(lineNumberToHighlight - 1)
         val endOffset = document.getLineEndOffset(lineNumberToHighlight + 2)
         markupModel?.apply {
             val highlighter = addRangeHighlighter(
@@ -134,8 +134,8 @@ class PomDiffViewer(private val project: Project) {
     }
 
     fun highlightLine(editor: Editor, document: Document, lineNumberToHighlight: Int) {
-        if (lineNumberToHighlight  < 0 || lineNumberToHighlight >= document.lineCount) {
-            println("Error in highlightLine(): lineNumberToHighlight not in document range ${lineNumberToHighlight} > ${document.lineCount}")
+        if (lineNumberToHighlight < 0 || lineNumberToHighlight >= document.lineCount) {
+            println("Error in highlightLine(): lineNumberToHighlight not in document range $lineNumberToHighlight > ${document.lineCount}")
             return
         }
         val highlighterAttributes = TextAttributes(
@@ -148,7 +148,7 @@ class PomDiffViewer(private val project: Project) {
 
         markupModel?.apply {
             val highlighter = addLineHighlighter(
-                lineNumberToHighlight-1,
+                lineNumberToHighlight - 1,
                 HighlighterLayer.ERROR, // like z-index,
                 highlighterAttributes
             )
@@ -201,8 +201,8 @@ class PomDiffViewer(private val project: Project) {
 
         // Define your action availability hint
 
-        val startOffset = document.getLineStartOffset(lineNumberToHighlight-1)
-        val endOffset = document.getLineEndOffset(lineNumberToHighlight-1)
+        val startOffset = document.getLineStartOffset(lineNumberToHighlight - 1)
+        val endOffset = document.getLineEndOffset(lineNumberToHighlight - 1)
 
         markupModel?.apply {
             val highlighter = addRangeHighlighter(
