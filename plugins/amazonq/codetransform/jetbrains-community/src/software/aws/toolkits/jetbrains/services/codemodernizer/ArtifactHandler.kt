@@ -5,14 +5,22 @@ package software.aws.toolkits.jetbrains.services.codemodernizer
 
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchMode
 import com.intellij.openapi.vcs.changes.patch.ImportToShelfExecutor
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.writeText
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiManager
 import kotlinx.coroutines.launch
+import software.aws.toolkits.core.utils.debug
 import software.aws.toolkits.core.utils.error
 import software.aws.toolkits.core.utils.exists
 import software.aws.toolkits.core.utils.getLogger
@@ -21,12 +29,13 @@ import software.aws.toolkits.jetbrains.core.coroutines.projectCoroutineScope
 import software.aws.toolkits.jetbrains.services.codemodernizer.client.GumbyClient
 import software.aws.toolkits.jetbrains.services.codemodernizer.model.CodeModernizerArtifact
 import software.aws.toolkits.jetbrains.services.codemodernizer.model.JobId
-import software.aws.toolkits.jetbrains.services.codemodernizer.summary.CodeModernizerSummaryEditorProvider
+import software.aws.toolkits.jetbrains.services.codemodernizer.summary.CodeModernizerSummaryVirtualFile
 import software.aws.toolkits.jetbrains.utils.notifyStickyInfo
 import software.aws.toolkits.jetbrains.utils.notifyStickyWarn
 import software.aws.toolkits.resources.message
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -176,12 +185,10 @@ class ArtifactHandler(private val project: Project, private val clientAdaptor: G
     fun getSummary(job: JobId) = downloadedSummaries[job]
 
     fun showTransformationSummary(jobId: JobId?) {
-        println( "showTransformationSummary: $jobId" )
+        println("showTransformationSummary: $jobId")
         if (isCurrentlyDownloading.get()) return
         runReadAction {
             projectCoroutineScope(project).launch {
-//                val result = downloadArtifact(job)
-//                val summary = result.artifact?.summary ?: return@launch notifyUnableToShowSummary()
                 val summary = """
                 ## Code Transformation Summary By Q
 
@@ -217,10 +224,51 @@ class ArtifactHandler(private val project: Project, private val clientAdaptor: G
 
 
                 In order to successfully verify these changes on your machine, you will need to change your project to use Java 17. We verified the changes using [Amazon Corretto](https://aws.amazon.com/corretto) Java17 build environment.
-                """
-                runInEdt { CodeModernizerSummaryEditorProvider.openEditor(project, summary) }
+                
+                ### Related links
+                1. [Open pom.xml](./pom.xml)
+                2. [Open AxonScaleDemoApplication.java](src/main/java/com/demo/AxonScaleDemoApplication.java) from project root path
+                3. [Open pom.xml](/Users/nardeck/Documents/workplace-tmp/gumby/axon-scale-demo-master/pom.xml) from absolute filesystem path
+                """.trimIndent()
+                runInEdt {
+//                    CodeModernizerSummaryEditorProvider.openEditor(project, summary)
+                    var basePath = project.basePath
+                    if (basePath == null) {
+                        LOG.debug { "Project basePath is null, not opening transformation job summary page" }
+                        basePath = "/test/"
+                    }
+                    val virtualFile = CodeModernizerSummaryVirtualFile(basePath)
+                    virtualFile.writeText(summary)
+                    replaceLinksWithFullProjectPath(project, virtualFile)
+//                    virtualFile.putUserData(CodeModernizerSummaryEditorProvider.MIGRATION_SUMMARY_KEY, summary.content)
+                    OpenFileDescriptor(project, virtualFile).navigate(true)
+                }
             }
         }
+    }
+
+    fun replaceLinksWithFullProjectPath(project: Project, virtualFile: VirtualFile) {
+        var psiManger = PsiManager.getInstance(project)
+        var psiDocumentManger = PsiDocumentManager.getInstance(project)
+        val psiFile = psiManger.findFile(virtualFile) ?: return
+        val document = psiDocumentManger.getDocument(psiFile) ?: return
+
+        val text = document.text
+        val linkPattern = Regex("\\[.*?\\]\\((.*?)\\)")
+        linkPattern.findAll(text).forEach { matchResult ->
+            val linkUrl = matchResult.groupValues[1]
+            if (isLocalFilePath(linkUrl)) {
+                val path = Paths.get(linkUrl).toAbsolutePath().toString()
+                val linkedFile = VirtualFileManager.getInstance().findFileByUrl(VfsUtil.pathToUrl(path)) ?: return@forEach
+                println("linkedFile $linkedFile")
+                FileEditorManager.getInstance(project).openFile(linkedFile, true)
+            }
+        }
+    }
+
+    private fun isLocalFilePath(path: String): Boolean {
+        // Add your logic to determine if the path is a local file path
+        return path.startsWith("/") || path.startsWith("./") || path.startsWith("../")
     }
 
     companion object {

@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBScrollPane
-import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import software.aws.toolkits.jetbrains.services.codemodernizer.summary.CodeModernizerSummaryEditorProvider.Companion.MIGRATION_SUMMARY_KEY
 import java.beans.PropertyChangeListener
 import javax.swing.BorderFactory
@@ -21,7 +20,7 @@ import javax.swing.SwingUtilities
 import javax.swing.event.HyperlinkEvent
 
 class CodeModernizerSummaryEditor(val project: Project, val virtualFile: VirtualFile) : UserDataHolderBase(), FileEditor {
-    val summary = virtualFile.getUserData(MIGRATION_SUMMARY_KEY) ?: throw RuntimeException("Migration summary not found")
+    val summary = virtualFile.getUserData(MIGRATION_SUMMARY_KEY) ?: "test"
 
     private val rootPanel = buildRootPanel()
 
@@ -483,26 +482,28 @@ class CodeModernizerSummaryEditor(val project: Project, val virtualFile: Virtual
     }
 
     private fun convertUsingGithubFlavoredMarkdown(markdown: String): String {
-        val bodyContents = MarkdownToHtmlConverter(GFMFlavourDescriptor()).convertMarkdownToHtml(markdown)
-
-        return """
-            <html>
-                <head>
-                    <style>
-                        ${renderCSSStyles()}
-                    </style>
-                </head>
-                <body class="markdown-body">
-                    $bodyContents
-                </body>
-            </html>
-        """.trimIndent()
+//        val bodyContents = MarkdownToHtmlConverter(GFMFlavourDescriptor()).convertMarkdownToHtml(markdown)
+//        println("markdownToHtmlConvert $bodyContents")
+//        return """
+//            <html>
+//                <head>
+//                    <style>
+//                        ${renderCSSStyles()}
+//                    </style>
+//                </head>
+//                <body class="markdown-body">
+//                    $bodyContents
+//                </body>
+//            </html>
+//        """.trimIndent()
+        return markdown
     }
 
     private fun buildRootPanel(): JBScrollPane {
-        val description = convertUsingGithubFlavoredMarkdown(summary.content)
+        val content = "No content"
+        val description = convertUsingGithubFlavoredMarkdown(content)
         val editorPane = JEditorPane().apply {
-            contentType = "text/html"
+            contentType = "text/markdown"
             putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
             border = BorderFactory.createCompoundBorder(
                 BorderFactory.createEmptyBorder(),

@@ -4,7 +4,6 @@
 package software.aws.toolkits.jetbrains.services.codemodernizer.summary
 
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -28,17 +27,16 @@ class CodeModernizerSummaryEditorProvider : FileEditorProvider, DumbAware {
 
     companion object {
         private val LOG = getLogger<CodeModernizerSummaryEditorProvider>()
-        val MIGRATION_SUMMARY_KEY = Key.create<String>("")
+        val MIGRATION_SUMMARY_KEY = Key.create<TransformationSummary>("")
 
-        fun openEditor(project: Project, summary: String) {
+        fun openEditor(project: Project, summary: TransformationSummary) {
             if (isRunningOnRemoteBackend()) return
-            val virtualFile = CodeModernizerSummaryVirtualFile()
+            val basePath = project.basePath ?: "/test"
+            val virtualFile = CodeModernizerSummaryVirtualFile(basePath)
             virtualFile.putUserData(MIGRATION_SUMMARY_KEY, summary)
             runInEdt {
                 try {
-                    FileEditorManager
-                        .getInstance(project)
-                        .openFileEditor(OpenFileDescriptor(project, virtualFile), true)
+                    OpenFileDescriptor(project, virtualFile).navigate(true)
                 } catch (e: Exception) {
                     LOG.debug(e) { "Showing transformation job summary  page failed to open" }
                 }
