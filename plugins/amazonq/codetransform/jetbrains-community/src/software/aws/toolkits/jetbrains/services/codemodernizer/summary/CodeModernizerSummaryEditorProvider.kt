@@ -28,9 +28,9 @@ class CodeModernizerSummaryEditorProvider : FileEditorProvider, DumbAware {
 
     companion object {
         private val LOG = getLogger<CodeModernizerSummaryEditorProvider>()
-        val MIGRATION_SUMMARY_KEY = Key.create<TransformationSummary>("")
+        val MIGRATION_SUMMARY_KEY = Key.create<String>("")
 
-        fun openEditor(project: Project, summary: TransformationSummary) {
+        fun openEditor(project: Project, summary: String) {
             if (isRunningOnRemoteBackend()) return
             val virtualFile = CodeModernizerSummaryVirtualFile()
             virtualFile.putUserData(MIGRATION_SUMMARY_KEY, summary)

@@ -175,12 +175,49 @@ class ArtifactHandler(private val project: Project, private val clientAdaptor: G
 
     fun getSummary(job: JobId) = downloadedSummaries[job]
 
-    fun showTransformationSummary(job: JobId) {
+    fun showTransformationSummary(jobId: JobId?) {
+        println( "showTransformationSummary: $jobId" )
         if (isCurrentlyDownloading.get()) return
         runReadAction {
             projectCoroutineScope(project).launch {
-                val result = downloadArtifact(job)
-                val summary = result.artifact?.summary ?: return@launch notifyUnableToShowSummary()
+//                val result = downloadArtifact(job)
+//                val summary = result.artifact?.summary ?: return@launch notifyUnableToShowSummary()
+                val summary = """
+                ## Code Transformation Summary By Q
+
+                _Amazon Q made the following changes to your code. We verified the changes in Java 17.
+                You can review the summary details below._
+
+                ### Files changed
+
+                | Files        | Action  |
+                |--------------|---------|
+                | `pom.xml` | Updated |
+
+                ### Dependencies changed
+
+                | Dependency Name    | Action | From | To |
+                |--------------------|--------|-----------------|----------------|
+                | `org.springframework.boot:spring-boot-starter-validation` | Added | |  |
+                | `javax.validation:validation-api` | Added | | 2.0.1.Final |
+                | `com.mysql:mysql-connector-j` | Added | | 8.0.33 |
+                | `org.webjars:webjars-locator` | Deleted | 0.32 | |
+                | `mysql:mysql-connector-java` | Deleted | 8.0.28 | |
+
+                The final JDK 17 build succeeded with the following result:
+                ```
+                The Maven build was successful in compiling 10 Java source files, packaging the code into a JAR file, and running tests. No compile errors or test failures occurred. Some warnings were logged about the maven-compiler-plugin configuration missing the compiler version.
+                ```
+
+                To see the final build log, check `buildCommandOutput.log`.
+
+
+                ### Next Steps
+                Please review and accept the code changes using the diff viewer. If you are using a Private Repository, please ensure that updated dependencies are available.
+
+
+                In order to successfully verify these changes on your machine, you will need to change your project to use Java 17. We verified the changes using [Amazon Corretto](https://aws.amazon.com/corretto) Java17 build environment.
+                """
                 runInEdt { CodeModernizerSummaryEditorProvider.openEditor(project, summary) }
             }
         }

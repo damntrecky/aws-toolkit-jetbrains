@@ -24,6 +24,7 @@ class CodeTransformProjectStartupSettingListener(private val project: Project) :
             val isAvailable = isCodeTransformAvailable(project)
             CodeModernizerBottomWindowPanelManager.getInstance(project).toolWindow?.isAvailable = isAvailable
             CodeModernizerManager.getInstance(project).handleCredentialsChanged()
+            CodeModernizerManager.getInstance(project).showTransformationSummary()
             if (isAvailable) {
                 CodeModernizerManager.getInstance(project).tryResumeJob()
             }

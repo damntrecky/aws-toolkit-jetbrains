@@ -699,8 +699,8 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
 
     override fun dispose() {}
     fun showTransformationSummary() {
-        val job = codeTransformationSession?.getActiveJobId() ?: return
-        artifactHandler.showTransformationSummary(job)
+//        val job = codeTransformationSession?.getActiveJobId() ?: return
+        artifactHandler.showTransformationSummary(null)
     }
 
     fun showTransformationPlan() {
