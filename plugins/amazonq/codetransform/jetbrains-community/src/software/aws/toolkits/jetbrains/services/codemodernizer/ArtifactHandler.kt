@@ -230,7 +230,7 @@ class ArtifactHandler(private val project: Project, private val clientAdaptor: G
                         LOG.debug { "Project basePath is null, not opening transformation job summary page" }
                         basePath = "/test/"
                     }
-                    val virtualFile = CodeModernizerSummaryVirtualFile(basePath)
+                    var virtualFile = CodeModernizerSummaryVirtualFile(basePath)
                     virtualFile.writeText(summary)
                     if (virtualFile != null) {
                         OpenFileDescriptor(project, virtualFile).navigate(true)
