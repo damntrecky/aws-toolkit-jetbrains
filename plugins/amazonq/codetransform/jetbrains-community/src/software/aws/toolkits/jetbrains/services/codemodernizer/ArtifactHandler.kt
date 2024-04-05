@@ -5,7 +5,7 @@ package software.aws.toolkits.jetbrains.services.codemodernizer
 
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -13,12 +13,10 @@ import com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchMode
 import com.intellij.openapi.vcs.changes.patch.ImportToShelfExecutor
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.writeText
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiManager
+import com.intellij.testFramework.LightVirtualFile
 import kotlinx.coroutines.launch
 import software.aws.toolkits.core.utils.debug
 import software.aws.toolkits.core.utils.error
@@ -35,7 +33,6 @@ import software.aws.toolkits.jetbrains.utils.notifyStickyWarn
 import software.aws.toolkits.resources.message
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -239,36 +236,12 @@ class ArtifactHandler(private val project: Project, private val clientAdaptor: G
                     }
                     val virtualFile = CodeModernizerSummaryVirtualFile(basePath)
                     virtualFile.writeText(summary)
-                    replaceLinksWithFullProjectPath(project, virtualFile)
-//                    virtualFile.putUserData(CodeModernizerSummaryEditorProvider.MIGRATION_SUMMARY_KEY, summary.content)
-                    OpenFileDescriptor(project, virtualFile).navigate(true)
+                    if (virtualFile != null) {
+                        OpenFileDescriptor(project, virtualFile).navigate(true)
+                    }
                 }
             }
         }
-    }
-
-    fun replaceLinksWithFullProjectPath(project: Project, virtualFile: VirtualFile) {
-        var psiManger = PsiManager.getInstance(project)
-        var psiDocumentManger = PsiDocumentManager.getInstance(project)
-        val psiFile = psiManger.findFile(virtualFile) ?: return
-        val document = psiDocumentManger.getDocument(psiFile) ?: return
-
-        val text = document.text
-        val linkPattern = Regex("\\[.*?\\]\\((.*?)\\)")
-        linkPattern.findAll(text).forEach { matchResult ->
-            val linkUrl = matchResult.groupValues[1]
-            if (isLocalFilePath(linkUrl)) {
-                val path = Paths.get(linkUrl).toAbsolutePath().toString()
-                val linkedFile = VirtualFileManager.getInstance().findFileByUrl(VfsUtil.pathToUrl(path)) ?: return@forEach
-                println("linkedFile $linkedFile")
-                FileEditorManager.getInstance(project).openFile(linkedFile, true)
-            }
-        }
-    }
-
-    private fun isLocalFilePath(path: String): Boolean {
-        // Add your logic to determine if the path is a local file path
-        return path.startsWith("/") || path.startsWith("./") || path.startsWith("../")
     }
 
     companion object {
