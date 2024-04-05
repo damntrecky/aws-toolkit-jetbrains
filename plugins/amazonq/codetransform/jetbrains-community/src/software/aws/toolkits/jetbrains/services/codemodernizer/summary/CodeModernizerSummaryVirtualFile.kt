@@ -14,6 +14,8 @@ class CodeModernizerSummaryVirtualFile : LightVirtualFile {
         println("CodeModernizerSummaryVirtualFile basePath is: $projectBasePath")
     }
 
+    override fun getUrl(): String = "file://$projectBasePath/transformation-summary.md"
+
     override fun getCanonicalPath(): String? = "$projectBasePath/transformation-summary.md"
 
     override fun getPresentableName(): String = "transformation-summary.md"

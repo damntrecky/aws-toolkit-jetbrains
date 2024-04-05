@@ -225,7 +225,6 @@ class ArtifactHandler(private val project: Project, private val clientAdaptor: G
                 3. [Open pom.xml](/Users/nardeck/Documents/workplace-tmp/gumby/axon-scale-demo-master/pom.xml) from absolute filesystem path
                 """.trimIndent()
                 runInEdt {
-//                    CodeModernizerSummaryEditorProvider.openEditor(project, summary)
                     var basePath = project.basePath
                     if (basePath == null) {
                         LOG.debug { "Project basePath is null, not opening transformation job summary page" }
