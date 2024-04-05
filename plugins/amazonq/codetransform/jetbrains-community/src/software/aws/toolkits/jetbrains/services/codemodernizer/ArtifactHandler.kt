@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.changes.patch.ApplyPatchMode
 import com.intellij.openapi.vcs.changes.patch.ImportToShelfExecutor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.writeText
-import kotlinx.coroutines.launch
 import software.aws.toolkits.core.utils.debug
 import software.aws.toolkits.core.utils.error
 import software.aws.toolkits.core.utils.exists
@@ -230,7 +229,7 @@ class ArtifactHandler(private val project: Project, private val clientAdaptor: G
                         LOG.debug { "Project basePath is null, not opening transformation job summary page" }
                         basePath = "/test/"
                     }
-                    val virtualFile = CodeModernizerSummaryVirtualFile(basePath)
+                    var virtualFile = CodeModernizerSummaryVirtualFile(basePath)
                     virtualFile.writeText(summary)
                     if (virtualFile != null) {
                         OpenFileDescriptor(project, virtualFile).navigate(true)
