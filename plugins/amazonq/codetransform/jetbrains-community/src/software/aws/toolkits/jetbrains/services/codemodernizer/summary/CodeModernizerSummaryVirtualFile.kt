@@ -5,7 +5,7 @@ package software.aws.toolkits.jetbrains.services.codemodernizer.summary
 
 import com.intellij.testFramework.LightVirtualFile
 
-//class CodeModernizerSummaryVirtualFile : LightVirtualFile(message("codemodernizer.migration_summary.header.title")) {
+// class CodeModernizerSummaryVirtualFile : LightVirtualFile(message("codemodernizer.migration_summary.header.title")) {
 class CodeModernizerSummaryVirtualFile : LightVirtualFile {
     var projectBasePath: String
 
@@ -14,9 +14,7 @@ class CodeModernizerSummaryVirtualFile : LightVirtualFile {
         println("CodeModernizerSummaryVirtualFile basePath is: $projectBasePath")
     }
 
-    override fun getCanonicalPath(): String? {
-        return "$projectBasePath/transformation-summary.md"
-    }
+    override fun getCanonicalPath(): String? = "$projectBasePath/transformation-summary.md"
 
     override fun getPresentableName(): String = "transformation-summary.md"
 
