@@ -188,3 +188,42 @@ private fun runMavenInstall(
     }
     return installTransformRunnable
 }
+
+private fun runMavenBuild1pDependency(
+    sourceFolder: File,
+    buildlogBuilder: StringBuilder,
+    mvnSettings: MavenRunnerSettings,
+    transformMavenRunner: TransformMavenRunner,
+    destinationDir: Path,
+    logger: Logger,
+    telemetry: CodeTransformTelemetryManager,
+): TransformRunnable {
+    buildlogBuilder.appendLine("Command Run: IntelliJ bundled Maven dependency:copy-dependencies")
+    val copyCommandList = listOf(
+        "versions:dependency-updates-aggregate-report",
+        "-DoutputDirectory=$destinationDir",
+        "-DonlyProjectDependencies=true",
+        "-DdependencyUpdatesReportFormats=xml",
+    )
+    val copyParams = MavenRunnerParameters(
+        false,
+        sourceFolder.absolutePath,
+        null,
+        copyCommandList,
+        emptyList<String>(),
+        null
+    )
+    val depdendencyBuildRunnable = TransformRunnable()
+    runInEdt {
+        try {
+            transformMavenRunner.run(copyParams, mvnSettings, depdendencyBuildRunnable)
+        } catch (t: Throwable) {
+            val error = "Maven Version: Unexpected error when executing bundled Maven copy dependencies"
+            depdendencyBuildRunnable.setExitCode(Integer.MIN_VALUE) // to stop looking for the exitCode
+            logger.error(t) { error }
+            buildlogBuilder.appendLine("IntelliJ bundled Maven copy dependencies failed: ${t.message}")
+            telemetry.mvnBuildFailed(CodeTransformMavenBuildCommand.IDEBundledMaven, error)
+        }
+    }
+    return depdendencyBuildRunnable
+}
