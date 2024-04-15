@@ -285,9 +285,9 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
 //                    name: tmpDependencyListFolderName,
 //                    path: tmpDependencyListDir,
 //            }
-            runMavenBuild1pDependency(
-                newPomFileVirtualFileReference
-            )
+//            runMavenBuild1pDependency(
+//                newPomFileVirtualFileReference
+//            )
             val dependencyList = parseXmlDependenciesReport(
                 "path.join(tmpDependencyListDir, localPathToXmlDependencyList)"
             )
