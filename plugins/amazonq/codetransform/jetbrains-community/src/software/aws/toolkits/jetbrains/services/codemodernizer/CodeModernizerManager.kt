@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import software.amazon.awssdk.services.codewhispererruntime.model.TransformationJob
 import software.amazon.awssdk.services.codewhispererruntime.model.TransformationPlan
 import software.amazon.awssdk.services.codewhispererruntime.model.TransformationStatus
@@ -572,14 +571,13 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
 
                 // TODO need to pass the version as params
                 CodeTransformMessageListener.instance.onHilArtifactReady()
-
             } else {
                 // TODO handle error
             }
-
         } catch (e: Error) {
             // TODO error handling
             // CodeTransformMessageListener.instance.onResult()
+            // call restStartTransformation("REJECTED") in all failure instances
             print(e.message)
         }
     }
@@ -600,7 +598,6 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
             // return early?
             return
         }
-
 
         // https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html#write-access
         ApplicationManager.getApplication().invokeLater {

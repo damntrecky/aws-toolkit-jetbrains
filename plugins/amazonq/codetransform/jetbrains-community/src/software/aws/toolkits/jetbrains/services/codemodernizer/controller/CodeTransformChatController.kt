@@ -24,10 +24,10 @@ import software.aws.toolkits.jetbrains.services.codemodernizer.commands.CodeTran
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.FEATURE_NAME
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildCheckingValidProjectChatContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildCompileHilAlternativeVersionContent
-import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildHilResumedContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildCompileLocalFailedChatContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildCompileLocalInProgressChatContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildCompileLocalSuccessChatContent
+import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildHilResumedContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildProjectInvalidChatContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildProjectValidChatContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildStartNewTransformFollowup
@@ -414,8 +414,6 @@ class CodeTransformChatController(
 
         codeModernizerManager.tryResumeWithAlternativeVersion()
     }
-
-
 
     companion object {
         private val logger = getLogger<CodeTransformChatController>()

@@ -20,6 +20,8 @@ dependencies {
     // hack because transform has a chat entrypoint
     implementation(project(":plugin-amazonq:chat:jetbrains-community"))
     implementation(project(mapOf("path" to ":plugin-core:sdk-codegen")))
+    implementation(project(mapOf("path" to ":plugin-amazonq:chat:jetbrains-community")))
+    implementation(project(mapOf("path" to ":plugin-amazonq:chat:jetbrains-community")))
 
     compileOnly(project(":plugin-core:jetbrains-community"))
 

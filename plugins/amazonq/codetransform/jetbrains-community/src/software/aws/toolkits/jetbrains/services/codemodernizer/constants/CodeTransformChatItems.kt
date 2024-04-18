@@ -281,7 +281,7 @@ fun buildTransformAwaitUserInputChatContent(): CodeTransformChatMessageContent {
     return CodeTransformChatMessageContent(
         type = CodeTransformChatMessageType.FinalizedAnswer,
         message =
-            "I found 3 other versions of dependency-9 that are higher than the one in your code (1.9.2).\n\nLatest major version: 2.2.0\nLatest minor version: 2.2.2",
+        "I found 3 other versions of dependency-9 that are higher than the one in your code (1.9.2).\n\nLatest major version: 2.2.0\nLatest minor version: 2.2.2",
         formItems = listOf(
             // TODO
             FormItem(

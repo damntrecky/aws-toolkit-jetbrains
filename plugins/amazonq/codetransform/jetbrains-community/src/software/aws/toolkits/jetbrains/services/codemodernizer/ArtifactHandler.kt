@@ -42,7 +42,6 @@ class ArtifactHandler(private val project: Project, private val clientAdaptor: G
 
     // TODO add manifest add pom path
 
-
     private var isCurrentlyDownloading = AtomicBoolean(false)
     internal suspend fun displayDiff(job: JobId) {
         if (isCurrentlyDownloading.get()) return
@@ -80,7 +79,7 @@ class ArtifactHandler(private val project: Project, private val clientAdaptor: G
         /*
         // TODO For testing only
         val zipPath = "your-local-downloaded-zip-path"
-        */
+         */
 
         return try {
             CodeTransformHilDownloadArtifact.create(zipPath)

@@ -89,7 +89,10 @@ data class CodeModernizerSessionContext(
         val buildLogBuilder = StringBuilder("Starting Build Log...\n")
         return executeDependencyVersionReportUsingMaven(sourceFolder, buildLogBuilder)
     }
-    private fun executeDependencyVersionReportUsingMaven(sourceFolder: File, buildLogBuilder: StringBuilder) = runDependencyReportCommands(sourceFolder, buildLogBuilder, LOG, project)
+    private fun executeDependencyVersionReportUsingMaven(
+        sourceFolder: File,
+        buildLogBuilder: StringBuilder
+    ) = runDependencyReportCommands(sourceFolder, buildLogBuilder, LOG, project)
 
     fun createZipWithModuleFiles(copyResult: MavenCopyCommandsResult): ZipCreationResult {
         val telemetry = CodeTransformTelemetryManager.getInstance(project)

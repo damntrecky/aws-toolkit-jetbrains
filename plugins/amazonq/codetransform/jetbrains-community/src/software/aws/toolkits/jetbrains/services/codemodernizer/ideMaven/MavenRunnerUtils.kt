@@ -247,7 +247,6 @@ fun runDependencyReportCommands(sourceFolder: File, buildlogBuilder: StringBuild
 
         // TODO remove
         parseXmlDependenciesReport("~/workplace/ide/test-projects/hil-test-repository/java-8-test-application/target/dependency-updates-aggregate-report.xml")
-
     } catch (t: Throwable) {
         emitMavenFailure("IntelliJ bundled Maven executed failed: ${t.message}", logger, telemetry, t)
         return MavenCopyCommandsResult.Failure

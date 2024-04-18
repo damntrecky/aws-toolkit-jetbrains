@@ -56,8 +56,8 @@ class CodeModernizerSession(
     // TODO change back
     private val initialPollingSleepDurationMillis: Long = 200,
     private val totalPollingSleepDurationMillis: Long = 500,
-    //private val initialPollingSleepDurationMillis: Long = 2000,
-    //private val totalPollingSleepDurationMillis: Long = 5000,
+    // private val initialPollingSleepDurationMillis: Long = 2000,
+    // private val totalPollingSleepDurationMillis: Long = 5000,
 ) : Disposable {
     private val clientAdaptor = GumbyClient.getInstance(sessionContext.project)
     private val state = CodeModernizerSessionState.getInstance(sessionContext.project)
@@ -136,7 +136,7 @@ class CodeModernizerSession(
                 return CodeModernizerStartJobResult.Cancelled
             }
             val uploadId = uploadPayloadMock(payload)
-            //val uploadId = uploadPayload(payload)
+            // val uploadId = uploadPayload(payload)
             if (shouldStop.get()) {
                 LOG.warn { "Job was cancelled by user before start job was called" }
                 return CodeModernizerStartJobResult.Cancelled
@@ -186,7 +186,7 @@ class CodeModernizerSession(
         LOG.info { "Starting job with uploadId [$uploadId] for $sourceLanguage -> $targetLanguage" }
         // TODO mock return paused job ID
         return clientAdaptor.startCodeModernizationMock(uploadId, sourceLanguage, targetLanguage)
-        //return clientAdaptor.startCodeModernization(uploadId, sourceLanguage, targetLanguage)
+        // return clientAdaptor.startCodeModernization(uploadId, sourceLanguage, targetLanguage)
     }
 
     /**
@@ -210,6 +210,7 @@ class CodeModernizerSession(
     fun uploadPayloadMock(payload: File): String {
         return "upload-ID"
     }
+
     /**
      * Adapted from [CodeWhispererCodeScanSession]
      */
@@ -265,7 +266,7 @@ class CodeModernizerSession(
 
             // add delay to avoid the throttling error
             // TODO change back
-            //delay(100)
+            // delay(100)
             delay(1000)
 
             var isTransformationPlanEditorOpened = false

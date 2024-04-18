@@ -7,11 +7,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.AlreadyDisposedException
+import org.slf4j.Logger
 import software.amazon.awssdk.awscore.exception.AwsServiceException
 import software.amazon.awssdk.services.codewhispererruntime.model.AccessDeniedException
 import software.amazon.awssdk.services.codewhispererruntime.model.CodeWhispererRuntimeException
 import software.amazon.awssdk.services.codewhispererruntime.model.GetTransformationResponse
 import software.amazon.awssdk.services.codewhispererruntime.model.InternalServerException
+import software.amazon.awssdk.services.codewhispererruntime.model.ResumeTransformationResponse
 import software.amazon.awssdk.services.codewhispererruntime.model.ThrottlingException
 import software.amazon.awssdk.services.codewhispererruntime.model.TransformationDownloadArtifact
 import software.amazon.awssdk.services.codewhispererruntime.model.TransformationJob
@@ -20,12 +22,16 @@ import software.amazon.awssdk.services.codewhispererruntime.model.Transformation
 import software.amazon.awssdk.services.codewhispererruntime.model.TransformationStatus
 import software.amazon.awssdk.services.codewhispererruntime.model.TransformationStep
 import software.amazon.awssdk.services.codewhispererruntime.model.TransformationStepStatus
+import software.amazon.awssdk.services.codewhispererruntime.model.TransformationUserActionStatus
 import software.amazon.awssdk.services.codewhispererruntime.model.ValidationException
 import software.aws.toolkits.core.utils.WaiterUnrecoverableException
 import software.aws.toolkits.core.utils.Waiters.waitUntil
+import software.aws.toolkits.core.utils.error
+import software.aws.toolkits.core.utils.info
 import software.aws.toolkits.jetbrains.services.codemodernizer.CodeTransformTelemetryManager
 import software.aws.toolkits.jetbrains.services.codemodernizer.client.GumbyClient
 import software.aws.toolkits.jetbrains.services.codemodernizer.model.JobId
+import software.aws.toolkits.telemetry.CodeTransformApiNames
 import java.io.File
 import java.lang.Thread.sleep
 import java.time.Duration
@@ -84,7 +90,7 @@ suspend fun JobId.pollTransformationStatusAndPlan(
                     didSleepOnce = true
                 }
                 if (isDisposed.get()) throw AlreadyDisposedException("The invoker is disposed.")
-                //transformationResponse = clientAdaptor.getCodeModernizationJobMock(this.id, statusCount)
+                // transformationResponse = clientAdaptor.getCodeModernizationJobMock(this.id, statusCount)
                 transformationResponse = clientAdaptor.getCodeModernizationJob(this.id)
                 statusCount++
                 val newStatus = transformationResponse?.transformationJob()?.status() ?: throw RuntimeException("Unable to get job status")
@@ -92,7 +98,7 @@ suspend fun JobId.pollTransformationStatusAndPlan(
                 if (newStatus in STATES_WHERE_PLAN_EXIST) {
                     sleep(sleepDurationMillis)
                     newPlan = clientAdaptor.getCodeModernizationPlan(this).transformationPlan()
-                    //newPlan = clientAdaptor.getCodeModernizationPlanMock(this, count).transformationPlan()
+                    // newPlan = clientAdaptor.getCodeModernizationPlanMock(this, count).transformationPlan()
                     count++
                 }
                 if (newStatus != state) {
@@ -175,4 +181,37 @@ fun downloadResultArchive(jobId: JobId, downloadArtifact: TransformationDownload
     val pomFileVirtualFileReference = localFileSystem.findFileByIoFile(pomFileFileReference)
 
     return arrayOf(manifestFileVirtualFileReference, pomFileVirtualFileReference)
+}
+
+fun restartCodeTransformation(
+    project: Project,
+    jobId: JobId,
+    status: TransformationUserActionStatus,
+    logger: Logger,
+    telemetry: CodeTransformTelemetryManager
+): TransformationStatus? {
+    val restartCodeTransformResponse: ResumeTransformationResponse?
+    val clientAdaptor = GumbyClient.getInstance(project)
+    val uploadStartTime = Instant.now()
+    try {
+        logger.info {
+            "Resuming transformation jobId: ${jobId.id} with status $status"
+        }
+
+        restartCodeTransformResponse = clientAdaptor.resumeCodeTransformation(jobId.id, status)
+        telemetry.logApiLatency(
+            CodeTransformApiNames.StartTransformation,
+            uploadStartTime,
+            0,
+            restartCodeTransformResponse.responseMetadata().requestId()
+        )
+    } catch (e: Exception) {
+        val errorMessage = "Unexpected error when uploading artifact to S3: ${e.localizedMessage}"
+        logger.error { errorMessage }
+        // emit this metric here manually since we don't use callApi(), which emits its own metric
+        telemetry.apiError(errorMessage, CodeTransformApiNames.StartTransformation, jobId.id)
+        throw e // pass along error to callee
+    }
+
+    return restartCodeTransformResponse.transformationStatus()
 }

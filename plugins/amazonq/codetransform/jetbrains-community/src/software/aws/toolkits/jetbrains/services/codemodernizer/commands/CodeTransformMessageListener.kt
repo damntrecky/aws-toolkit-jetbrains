@@ -16,9 +16,15 @@ class CodeTransformMessageListener {
 
     // TODO fix parameters
     fun onHilArtifactReady() {
-        _messages.tryEmit(CodeTransformActionMessage(CodeTransformCommand.HilArtifactReady, hilAvailableVersions = listOf(
-            "1.1", "1.2"
-        )))
+        _messages.tryEmit(
+            CodeTransformActionMessage(
+                CodeTransformCommand.HilArtifactReady,
+                hilAvailableVersions = listOf(
+                    "1.1",
+                    "1.2"
+                )
+            )
+        )
     }
 
     fun onStopClicked() {
