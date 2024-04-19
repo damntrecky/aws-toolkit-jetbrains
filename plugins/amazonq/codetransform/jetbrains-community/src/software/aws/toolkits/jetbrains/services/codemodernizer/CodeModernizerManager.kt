@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import software.amazon.awssdk.services.codewhispererruntime.model.TransformationJob
 import software.amazon.awssdk.services.codewhispererruntime.model.TransformationPlan
 import software.amazon.awssdk.services.codewhispererruntime.model.TransformationStatus
+import software.amazon.awssdk.services.codewhispererruntime.model.TransformationUserActionStatus
 import software.aws.toolkits.core.utils.error
 import software.aws.toolkits.core.utils.getLogger
 import software.aws.toolkits.core.utils.info
@@ -46,6 +47,7 @@ import software.aws.toolkits.jetbrains.services.codemodernizer.state.CodeModerni
 import software.aws.toolkits.jetbrains.services.codemodernizer.state.StateFlags
 import software.aws.toolkits.jetbrains.services.codemodernizer.state.buildState
 import software.aws.toolkits.jetbrains.services.codemodernizer.toolwindow.CodeModernizerBottomToolWindowFactory
+import software.aws.toolkits.jetbrains.services.codemodernizer.utils.CodeTransformApiHelper
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.STATES_WHERE_PLAN_EXIST
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.TROUBLESHOOTING_URL_MAVEN_COMMANDS
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.TROUBLESHOOTING_URL_PREREQUISITES
@@ -70,6 +72,7 @@ import software.aws.toolkits.jetbrains.utils.notifyStickyInfo
 import software.aws.toolkits.resources.message
 import software.aws.toolkits.telemetry.CodeTransformCancelSrcComponents
 import software.aws.toolkits.telemetry.CodeTransformPreValidationError
+import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.Instant
@@ -938,22 +941,28 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
 
     // TODO fix param
     suspend fun tryResumeWithAlternativeVersion() {
-        // TODO remove
-        delay(3000)
+        try {
+            // TODO remove
+            delay(3000)
+            // TODO change version in downloaded pom.xml
 
-        // TODO change version in downloaded pom.xml
+            // run maven locally with updated pom.xml
+            delay(3000)
 
-        // run maven locally with updated pom.xml
-        // TODO create upload URL
-        // TODO upload artifact
-        // TODO call resume
-        delay(3000)
-
-        val localZipPathForTesting = "your-zip-path"
-        // TODO create upload URL
-        // TODO upload the zip to s3
-        // TODO call resumeTransformation with COMPLETED status
-
-        CodeTransformMessageListener.instance.onResumedWithAlternativeVersion()
+            val localZipPathForTesting = "your-zip-path"
+            val file = File(localZipPathForTesting)
+            CodeTransformApiHelper(project).uploadPayload(file, codeTransformationSession!!.getIsDisposed(), codeTransformationSession!!.getShouldStop())
+            CodeTransformMessageListener.instance.onResumedWithAlternativeVersion()
+        } catch (e: Exception) {
+            // If any error occurred handle the messaging to user and restart transformation with REJECTED.
+            // This will tell the backend to ignore HIL state and go for a partial transformation completion
+            codeTransformationSession?.getActiveJobId()?.let {
+                CodeTransformApiHelper(
+                    project
+                ).restartCodeTransformation(it, TransformationUserActionStatus.REJECTED)
+            }
+        } finally {
+            // cleanup files from this function and previous HIL function
+        }
     }
 }

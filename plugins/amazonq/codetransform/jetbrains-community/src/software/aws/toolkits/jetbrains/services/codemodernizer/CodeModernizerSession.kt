@@ -398,6 +398,9 @@ class CodeModernizerSession(
         isDisposed.set(true)
     }
 
+    fun getIsDisposed() = isDisposed
+    fun getShouldStop() = shouldStop
+
     fun getActiveJobId() = state.currentJobId
     fun fetchPlan(lastJobId: JobId) = clientAdaptor.getCodeModernizationPlan(lastJobId)
 }
