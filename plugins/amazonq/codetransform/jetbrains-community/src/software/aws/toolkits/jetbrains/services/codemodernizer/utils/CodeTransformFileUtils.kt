@@ -9,6 +9,9 @@ import kotlinx.serialization.json.JsonObject
 import org.gradle.internal.impldep.com.google.gson.Gson
 import software.aws.toolkits.core.utils.createParentDirectories
 import software.aws.toolkits.core.utils.exists
+import software.aws.toolkits.core.utils.getLogger
+import software.aws.toolkits.core.utils.warn
+import software.aws.toolkits.jetbrains.services.codemodernizer.CodeModernizerSession
 import software.aws.toolkits.jetbrains.services.codemodernizer.model.MAVEN_CONFIGURATION_FILE_NAME
 import java.io.File
 import java.io.FileOutputStream
@@ -144,4 +147,16 @@ fun replacePomVersion(pomFileVirtualFileReference: VirtualFile, version: String,
 fun parseXmlDependenciesReport(pathToXmlDependency: String): Array<String> {
     println("Inside parseXmlDependenciesReport $pathToXmlDependency")
     return arrayOf("12.04.1", "12.05.2")
+}
+
+class CodeTransformFileHelper() {
+    fun deleteFileArtifact(payload: File, errorMsg: String) {
+        if (!payload.delete()) {
+            LOG.warn { errorMsg }
+        }
+    }
+
+    companion object {
+        private val LOG = getLogger<CodeModernizerSession>()
+    }
 }

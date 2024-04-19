@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.serviceContainer.AlreadyDisposedException
 import kotlinx.coroutines.delay
-import org.apache.commons.codec.digest.DigestUtils
 import software.amazon.awssdk.services.codewhispererruntime.model.StartTransformationResponse
 import software.amazon.awssdk.services.codewhispererruntime.model.TransformationJob
 import software.amazon.awssdk.services.codewhispererruntime.model.TransformationLanguage
@@ -29,6 +28,8 @@ import software.aws.toolkits.jetbrains.services.codemodernizer.model.MavenCopyCo
 import software.aws.toolkits.jetbrains.services.codemodernizer.model.ZipCreationResult
 import software.aws.toolkits.jetbrains.services.codemodernizer.plan.CodeModernizerPlanEditorProvider
 import software.aws.toolkits.jetbrains.services.codemodernizer.state.CodeModernizerSessionState
+import software.aws.toolkits.jetbrains.services.codemodernizer.utils.CodeTransformApiHelper
+import software.aws.toolkits.jetbrains.services.codemodernizer.utils.CodeTransformFileHelper
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.STATES_AFTER_INITIAL_BUILD
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.STATES_AFTER_STARTED
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.getModuleOrProjectNameForFile
@@ -36,12 +37,9 @@ import software.aws.toolkits.jetbrains.services.codemodernizer.utils.pollTransfo
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.toTransformationLanguage
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.CodeWhispererCodeScanSession
 import software.aws.toolkits.resources.message
-import software.aws.toolkits.telemetry.CodeTransformApiNames
 import java.io.File
-import java.io.FileInputStream
 import java.io.IOException
 import java.time.Instant
-import java.util.Base64
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -67,6 +65,7 @@ class CodeModernizerSession(
 
     private var mvnBuildResult: MavenCopyCommandsResult? = null
     private var transformResult: CodeModernizerJobCompletedResult? = null
+    private var codeModernizerApiHelper: CodeTransformApiHelper = CodeTransformApiHelper(sessionContext.project)
 
     fun getLastMvnBuildResult(): MavenCopyCommandsResult? = mvnBuildResult
 
@@ -164,13 +163,7 @@ class CodeModernizerSession(
             state.currentJobStatus = TransformationStatus.FAILED
             CodeModernizerStartJobResult.UnableToStartJob(e.message.toString())
         } finally {
-            deleteUploadArtifact(payload)
-        }
-    }
-
-    internal fun deleteUploadArtifact(payload: File) {
-        if (!payload.delete()) {
-            LOG.warn { "Unable to delete upload artifact." }
+            CodeTransformFileHelper().deleteFileArtifact(payload, "Unable to delete upload artifact.")
         }
     }
 
@@ -211,50 +204,8 @@ class CodeModernizerSession(
         return "upload-ID"
     }
 
-    /**
-     * Adapted from [CodeWhispererCodeScanSession]
-     */
     fun uploadPayload(payload: File): String {
-        val sha256checksum: String = Base64.getEncoder().encodeToString(DigestUtils.sha256(FileInputStream(payload)))
-        if (isDisposed.get()) {
-            throw AlreadyDisposedException("Disposed when about to create upload URL")
-        }
-        val clientAdaptor = GumbyClient.getInstance(sessionContext.project)
-        val createUploadUrlResponse = clientAdaptor.createGumbyUploadUrl(sha256checksum)
-
-        LOG.info {
-            "Uploading zip with checksum $sha256checksum using uploadId: ${
-                createUploadUrlResponse.uploadId()
-            } and size ${(payload.length() / 1000).toInt()}kB"
-        }
-        if (isDisposed.get()) {
-            throw AlreadyDisposedException("Disposed when about to upload zip to s3")
-        }
-        val uploadStartTime = Instant.now()
-        try {
-            clientAdaptor.uploadArtifactToS3(
-                createUploadUrlResponse.uploadUrl(),
-                payload,
-                sha256checksum,
-                createUploadUrlResponse.kmsKeyArn().orEmpty(),
-            ) { shouldStop.get() }
-        } catch (e: Exception) {
-            val errorMessage = "Unexpected error when uploading artifact to S3: ${e.localizedMessage}"
-            LOG.error { errorMessage }
-            // emit this metric here manually since we don't use callApi(), which emits its own metric
-            telemetry.apiError(errorMessage, CodeTransformApiNames.UploadZip, createUploadUrlResponse.uploadId())
-            throw e // pass along error to callee
-        }
-        if (!shouldStop.get()) {
-            telemetry.logApiLatency(
-                CodeTransformApiNames.UploadZip,
-                uploadStartTime,
-                payload.length().toInt(),
-                createUploadUrlResponse.responseMetadata().requestId(),
-            )
-            LOG.warn { "Upload complete" }
-        }
-        return createUploadUrlResponse.uploadId()
+        return codeModernizerApiHelper.uploadPayload(payload, isDisposed, shouldStop)
     }
 
     suspend fun pollUntilJobCompletion(

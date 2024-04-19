@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.AlreadyDisposedException
-import org.slf4j.Logger
+import org.apache.commons.codec.digest.DigestUtils
 import software.amazon.awssdk.awscore.exception.AwsServiceException
 import software.amazon.awssdk.services.codewhispererruntime.model.AccessDeniedException
 import software.amazon.awssdk.services.codewhispererruntime.model.CodeWhispererRuntimeException
@@ -27,15 +27,20 @@ import software.amazon.awssdk.services.codewhispererruntime.model.ValidationExce
 import software.aws.toolkits.core.utils.WaiterUnrecoverableException
 import software.aws.toolkits.core.utils.Waiters.waitUntil
 import software.aws.toolkits.core.utils.error
+import software.aws.toolkits.core.utils.getLogger
 import software.aws.toolkits.core.utils.info
+import software.aws.toolkits.core.utils.warn
+import software.aws.toolkits.jetbrains.services.codemodernizer.CodeModernizerSession
 import software.aws.toolkits.jetbrains.services.codemodernizer.CodeTransformTelemetryManager
 import software.aws.toolkits.jetbrains.services.codemodernizer.client.GumbyClient
 import software.aws.toolkits.jetbrains.services.codemodernizer.model.JobId
 import software.aws.toolkits.telemetry.CodeTransformApiNames
 import java.io.File
+import java.io.FileInputStream
 import java.lang.Thread.sleep
 import java.time.Duration
 import java.time.Instant
+import java.util.Base64
 import java.util.concurrent.atomic.AtomicBoolean
 
 data class PollingResult(
@@ -183,35 +188,88 @@ fun downloadResultArchive(jobId: JobId, downloadArtifact: TransformationDownload
     return arrayOf(manifestFileVirtualFileReference, pomFileVirtualFileReference)
 }
 
-fun restartCodeTransformation(
+class CodeTransformApiHelper(
     project: Project,
-    jobId: JobId,
-    status: TransformationUserActionStatus,
-    logger: Logger,
-    telemetry: CodeTransformTelemetryManager
-): TransformationStatus? {
-    val restartCodeTransformResponse: ResumeTransformationResponse?
-    val clientAdaptor = GumbyClient.getInstance(project)
-    val uploadStartTime = Instant.now()
-    try {
-        logger.info {
-            "Resuming transformation jobId: ${jobId.id} with status $status"
+) {
+    private val telemetry = CodeTransformTelemetryManager.getInstance(project)
+    private val clientAdaptor = GumbyClient.getInstance(project)
+
+    fun restartCodeTransformation(
+        jobId: JobId,
+        status: TransformationUserActionStatus,
+    ): TransformationStatus? {
+        val restartCodeTransformResponse: ResumeTransformationResponse?
+        val uploadStartTime = Instant.now()
+        try {
+            LOG.info {
+                "Resuming transformation jobId: ${jobId.id} with status $status"
+            }
+
+            restartCodeTransformResponse = clientAdaptor.resumeCodeTransformation(jobId.id, status)
+            telemetry.logApiLatency(
+                CodeTransformApiNames.StartTransformation,
+                uploadStartTime,
+                0,
+                restartCodeTransformResponse.responseMetadata().requestId()
+            )
+        } catch (e: Exception) {
+            val errorMessage = "Unexpected error when uploading artifact to S3: ${e.localizedMessage}"
+            LOG.error { errorMessage }
+            // emit this metric here manually since we don't use callApi(), which emits its own metric
+            telemetry.apiError(errorMessage, CodeTransformApiNames.StartTransformation, jobId.id)
+            throw e // pass along error to callee
         }
 
-        restartCodeTransformResponse = clientAdaptor.resumeCodeTransformation(jobId.id, status)
-        telemetry.logApiLatency(
-            CodeTransformApiNames.StartTransformation,
-            uploadStartTime,
-            0,
-            restartCodeTransformResponse.responseMetadata().requestId()
-        )
-    } catch (e: Exception) {
-        val errorMessage = "Unexpected error when uploading artifact to S3: ${e.localizedMessage}"
-        logger.error { errorMessage }
-        // emit this metric here manually since we don't use callApi(), which emits its own metric
-        telemetry.apiError(errorMessage, CodeTransformApiNames.StartTransformation, jobId.id)
-        throw e // pass along error to callee
+        return restartCodeTransformResponse.transformationStatus()
     }
 
-    return restartCodeTransformResponse.transformationStatus()
+    fun uploadPayload(
+        payload: File,
+        isDisposed: AtomicBoolean,
+        shouldStop: AtomicBoolean
+    ): String {
+        val sha256checksum: String = Base64.getEncoder().encodeToString(DigestUtils.sha256(FileInputStream(payload)))
+        if (isDisposed.get()) {
+            throw AlreadyDisposedException("Disposed when about to create upload URL")
+        }
+        val createUploadUrlResponse = clientAdaptor.createGumbyUploadUrl(sha256checksum)
+
+        LOG.info {
+            "Uploading zip with checksum $sha256checksum using uploadId: ${
+                createUploadUrlResponse.uploadId()
+            } and size ${(payload.length() / 1000).toInt()}kB"
+        }
+        if (isDisposed.get()) {
+            throw AlreadyDisposedException("Disposed when about to upload zip to s3")
+        }
+        val uploadStartTime = Instant.now()
+        try {
+            clientAdaptor.uploadArtifactToS3(
+                createUploadUrlResponse.uploadUrl(),
+                payload,
+                sha256checksum,
+                createUploadUrlResponse.kmsKeyArn().orEmpty(),
+            ) { shouldStop.get() }
+        } catch (e: Exception) {
+            val errorMessage = "Unexpected error when uploading artifact to S3: ${e.localizedMessage}"
+            LOG.error { errorMessage }
+            // emit this metric here manually since we don't use callApi(), which emits its own metric
+            telemetry.apiError(errorMessage, CodeTransformApiNames.UploadZip, createUploadUrlResponse.uploadId())
+            throw e // pass along error to callee
+        }
+        if (!shouldStop.get()) {
+            telemetry.logApiLatency(
+                CodeTransformApiNames.UploadZip,
+                uploadStartTime,
+                payload.length().toInt(),
+                createUploadUrlResponse.responseMetadata().requestId(),
+            )
+            LOG.warn { "Upload complete" }
+        }
+        return createUploadUrlResponse.uploadId()
+    }
+
+    companion object {
+        private val LOG = getLogger<CodeModernizerSession>()
+    }
 }
