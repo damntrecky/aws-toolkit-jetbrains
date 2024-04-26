@@ -48,6 +48,7 @@ import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildUs
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildUserInputChatContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildUserSelectionSummaryChatContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildUserStopTransformChatContent
+import software.aws.toolkits.jetbrains.services.codemodernizer.file.PomFileAnnotator
 import software.aws.toolkits.jetbrains.services.codemodernizer.messages.AuthenticationNeededExceptionMessage
 import software.aws.toolkits.jetbrains.services.codemodernizer.messages.CodeTransformChatMessage
 import software.aws.toolkits.jetbrains.services.codemodernizer.messages.CodeTransformCommandMessage
@@ -414,6 +415,8 @@ class CodeTransformChatController(
             hilTryResumeAfterError("Cannot find other versions locally for the dependency.")
             return
         }
+        // display the pomFile
+        val pomFileAnnotator = PomFileAnnotator(project, hilDownloadArtifact.pomFile)
         codeTransformChatHelper.updateLastPendingMessage(buildTransformAwaitUserInputChatContent(dependency))
         runInEdt {
             codeModernizerManager.getBottomToolWindow().show()

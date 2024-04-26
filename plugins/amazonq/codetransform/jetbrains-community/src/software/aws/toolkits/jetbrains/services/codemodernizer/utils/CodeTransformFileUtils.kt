@@ -4,6 +4,7 @@
 package software.aws.toolkits.jetbrains.services.codemodernizer.utils
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import software.aws.toolkits.core.utils.createParentDirectories
@@ -107,4 +108,24 @@ fun setDependencyVersionInPom(pomFile: File, version: String) {
     val existingValue = pomFile.readText()
     val newValue = existingValue.replace(placeholder, version)
     pomFile.writeText(newValue)
+}
+
+fun findLineNumber(virtualFile: VirtualFile, searchString: String): Int? {
+    val document = FileDocumentManager.getInstance().getDocument(virtualFile)
+    if (document == null) {
+        return null
+    }
+
+    val text = document.text
+    var lineNumber = 0
+    val lines = text.split("\n")
+
+    for (line in lines) {
+        if (line.contains(searchString)) {
+            return lineNumber
+        }
+        lineNumber++
+    }
+
+    return null
 }
