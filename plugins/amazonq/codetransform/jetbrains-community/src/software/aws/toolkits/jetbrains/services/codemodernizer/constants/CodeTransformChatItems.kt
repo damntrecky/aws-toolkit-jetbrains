@@ -86,8 +86,7 @@ private val rejectHilSelectionButton = Button(
 
 private val openDependencyErrorPomFileButton = Button(
     id = CodeTransformButtonId.OpenDependencyErrorPom.id,
-    // TODO translate
-    text = "Open file",
+    text = message("codemodernizer.chat.message.button.open_file"),
     keepCardAfterClick = true,
 )
 
@@ -333,6 +332,7 @@ fun buildTransformDependencyErrorChatContent(hilDownloadArtifact: CodeTransformH
         "  </dependency>\n" +
         "</dependencies>",
     type = CodeTransformChatMessageType.FinalizedAnswer,
+    buttons = listOf(openDependencyErrorPomFileButton)
 )
 
 fun buildTransformFindingLocalAlternativeDependencyChatContent() = CodeTransformChatMessageContent(

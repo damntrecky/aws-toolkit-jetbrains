@@ -124,6 +124,10 @@ sealed interface IncomingCodeTransformMessage : CodeTransformBaseMessage {
     data class RejectHilSelection(
         @JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeTransformMessage
+
+    data class OpenPomFileHilClicked(
+        @JsonProperty("tabID") val tabId: String,
+    ) : IncomingCodeTransformMessage
 }
 
 // === App -> UI messages ===

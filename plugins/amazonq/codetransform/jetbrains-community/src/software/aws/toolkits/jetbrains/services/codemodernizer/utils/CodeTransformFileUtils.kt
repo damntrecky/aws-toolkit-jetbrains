@@ -110,7 +110,7 @@ fun setDependencyVersionInPom(pomFile: File, version: String) {
     pomFile.writeText(newValue)
 }
 
-fun findLineNumber(virtualFile: VirtualFile, searchString: String): Int? {
+fun findLineNumberByString(virtualFile: VirtualFile, searchString: String): Int? {
     val document = FileDocumentManager.getInstance().getDocument(virtualFile)
     if (document == null) {
         return null

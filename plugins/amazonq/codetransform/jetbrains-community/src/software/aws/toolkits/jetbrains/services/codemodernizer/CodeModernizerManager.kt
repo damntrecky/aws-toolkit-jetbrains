@@ -16,7 +16,10 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil.createTempDirectory
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import software.amazon.awssdk.services.codewhispererruntime.model.TransformationJob
@@ -30,6 +33,7 @@ import software.aws.toolkits.jetbrains.core.coroutines.projectCoroutineScope
 import software.aws.toolkits.jetbrains.core.explorer.refreshCwQTree
 import software.aws.toolkits.jetbrains.services.codemodernizer.client.GumbyClient
 import software.aws.toolkits.jetbrains.services.codemodernizer.commands.CodeTransformMessageListener
+import software.aws.toolkits.jetbrains.services.codemodernizer.file.PomFileAnnotator
 import software.aws.toolkits.jetbrains.services.codemodernizer.model.CodeModernizerException
 import software.aws.toolkits.jetbrains.services.codemodernizer.model.CodeModernizerJobCompletedResult
 import software.aws.toolkits.jetbrains.services.codemodernizer.model.CodeModernizerSessionContext
@@ -53,6 +57,7 @@ import software.aws.toolkits.jetbrains.services.codemodernizer.utils.STATES_WHER
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.TROUBLESHOOTING_URL_MAVEN_COMMANDS
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.TROUBLESHOOTING_URL_PREREQUISITES
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.createFileCopy
+import software.aws.toolkits.jetbrains.services.codemodernizer.utils.findLineNumberByString
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.getModuleOrProjectNameForFile
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.getSupportedBuildFilesWithSupportedJdk
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.getSupportedJavaMappings
@@ -833,6 +838,24 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
         } catch (e: Exception) {
             return MavenCopyCommandsResult.Failure
         }
+    }
+
+    fun showHilPomFileAnnotation(file: File, currentDependencyVersion: String): Boolean {
+        try {
+            val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file)
+            if (virtualFile != null) {
+                var lineNumberToHighlight = findLineNumberByString(virtualFile, "<version>${currentDependencyVersion}</version>")
+                val pomFileAnnotator = PomFileAnnotator(project, virtualFile, lineNumberToHighlight)
+                pomFileAnnotator.showCustomEditor() // opens editor using Edt thread
+            } else {
+                return false
+            }
+        } catch(e: Exception) {
+            LOG.error(e.message)
+            return false
+        }
+
+        return true
     }
 
     suspend fun tryResumeWithAlternativeVersion(selectedVersion: String) {

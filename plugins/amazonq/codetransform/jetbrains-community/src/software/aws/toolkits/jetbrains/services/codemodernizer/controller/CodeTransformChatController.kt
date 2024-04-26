@@ -409,14 +409,12 @@ class CodeTransformChatController(
             hilTryResumeAfterError("Cannot find other versions locally for the dependency.")
             return
         }
-
+        codeModernizerManager.showHilPomFileAnnotation(hilDownloadArtifact.pomFile, hilDownloadArtifact.manifest.sourcePomVersion)
         val dependency = codeModernizerManager.findAvailableVersionForDependency(hilDownloadArtifact.manifest.pomGroupId, hilDownloadArtifact.manifest.pomArtifactId)
         if (dependency == null || (dependency.majors.isNullOrEmpty() && dependency.minors.isNullOrEmpty() && dependency.incrementals.isNullOrEmpty())) {
             hilTryResumeAfterError("Cannot find other versions locally for the dependency.")
             return
         }
-        // display the pomFile
-        val pomFileAnnotator = PomFileAnnotator(project, hilDownloadArtifact.pomFile)
         codeTransformChatHelper.updateLastPendingMessage(buildTransformAwaitUserInputChatContent(dependency))
         runInEdt {
             codeModernizerManager.getBottomToolWindow().show()
@@ -478,6 +476,20 @@ class CodeTransformChatController(
         }
     }
 
+    override suspend fun processOpenPomFileHilClicked(message: IncomingCodeTransformMessage.OpenPomFileHilClicked) {
+        if (!checkForAuth(message.tabId)) {
+            return
+        }
+
+        try {
+            val hilDownloadArtifact = codeModernizerManager.getArtifactForHil()
+            if (hilDownloadArtifact != null) {
+                codeModernizerManager.showHilPomFileAnnotation(hilDownloadArtifact.pomFile, hilDownloadArtifact.manifest.sourcePomVersion)
+            }
+        } catch (e: Exception) {
+            // TODO error handling
+        }
+    }
 
     companion object {
         private val logger = getLogger<CodeTransformChatController>()
