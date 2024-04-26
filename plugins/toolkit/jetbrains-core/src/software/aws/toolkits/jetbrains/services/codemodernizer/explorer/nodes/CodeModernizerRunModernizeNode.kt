@@ -13,7 +13,6 @@ import software.aws.toolkits.jetbrains.services.codemodernizer.state.CodeModerni
 import software.aws.toolkits.jetbrains.services.codewhisperer.explorer.nodes.CodeWhispererActionNode
 import software.aws.toolkits.resources.message
 import software.aws.toolkits.telemetry.CodeTransformStartSrcComponents
-import software.aws.toolkits.telemetry.UiTelemetry
 import java.awt.event.MouseEvent
 
 const val RUN_NODE_INDEX = 5
@@ -35,7 +34,7 @@ class CodeModernizerRunModernizeNode(private val nodeProject: Project) : CodeWhi
         } else {
             codeModernizerManager.stopModernize()
         }
-        UiTelemetry.click(nodeProject, "amazonq_transform")
+//        UiTelemetry.click(nodeProject, "amazonq_transform")
     }
 
     override fun update(presentation: PresentationData) {

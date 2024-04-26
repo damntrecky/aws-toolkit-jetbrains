@@ -16,7 +16,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.ToolWindowManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -62,8 +65,6 @@ import software.aws.toolkits.jetbrains.utils.notifyStickyError
 import software.aws.toolkits.jetbrains.utils.notifyStickyInfo
 import software.aws.toolkits.resources.message
 import software.aws.toolkits.telemetry.CodeTransformCancelSrcComponents
-import software.aws.toolkits.telemetry.CodeTransformJavaSourceVersionsAllowed
-import software.aws.toolkits.telemetry.CodeTransformJavaTargetVersionsAllowed
 import software.aws.toolkits.telemetry.CodeTransformPreValidationError
 import software.aws.toolkits.telemetry.CodeTransformStartSrcComponents
 import software.aws.toolkits.telemetry.CodetransformTelemetry
@@ -202,15 +203,11 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
 
     fun diffViewTest() {
         val pomFile1 = "/Users/nardeck/workplace/gumby-prod/aws-toolkit-jetbrains/plugins/toolkit/jetbrains-core/src/software/aws/toolkits/jetbrains/services/codemodernizer/vcs/pom1.xml"
-        val pomFile2 = "/Users/nardeck/workplace/gumby-prod/aws-toolkit-jetbrains/plugins/toolkit/jetbrains-core/src/software/aws/toolkits/jetbrains/services/codemodernizer/vcs/pom2.xml"
-
-        val pomDiffViewer = PomDiffViewer(project)
-        pomDiffViewer.createDiffView(pomFile1, pomFile2)
-
-        // create custom editor file
-        pomDiffViewer.showCustomEditor()
-
-        pomDiffViewer.showDiff()
+        val pomVirtualFile = LocalFileSystem.getInstance().findFileByPath(pomFile1)
+        if (pomVirtualFile != null) {
+            val pomDiffViewer = PomDiffViewer(project, pomVirtualFile)
+            pomDiffViewer.showCustomEditor()
+        }
     }
 
     fun validateAndStart(srcStartComponent: CodeTransformStartSrcComponents = CodeTransformStartSrcComponents.DevToolsStartButton) =
@@ -262,11 +259,11 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
     fun runModernize(validatedBuildFiles: List<VirtualFile>): Job? {
         initStopParameters()
         val customerSelection = getCustomerSelection(validatedBuildFiles) ?: return null
-        CodetransformTelemetry.jobStartedCompleteFromPopupDialog(
-            codeTransformJavaSourceVersionsAllowed = CodeTransformJavaSourceVersionsAllowed.from(customerSelection.sourceJavaVersion.name),
-            codeTransformJavaTargetVersionsAllowed = CodeTransformJavaTargetVersionsAllowed.from(customerSelection.targetJavaVersion.name),
-            codeTransformSessionId = CodeTransformTelemetryState.instance.getSessionId()
-        )
+//        CodetransformTelemetry.jobStartedCompleteFromPopupDialog(
+//            codeTransformJavaSourceVersionsAllowed = CodeTransformJavaSourceVersionsAllowed.from(customerSelection.sourceJavaVersion.name),
+//            codeTransformJavaTargetVersionsAllowed = CodeTransformJavaTargetVersionsAllowed.from(customerSelection.targetJavaVersion.name),
+//            codeTransformSessionId = CodeTransformTelemetryState.instance.getSessionId()
+//        )
         initModernizationJobUI(true, project.getModuleOrProjectNameForFile(customerSelection.configurationFile))
         val session = createCodeModernizerSession(customerSelection, project)
         codeTransformationSession = session
