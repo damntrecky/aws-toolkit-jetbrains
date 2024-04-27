@@ -831,9 +831,11 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
         }
     }
 
-    fun showHilPomFileAnnotation(file: File, currentDependencyVersion: String): Boolean {
+    fun showHilPomFileAnnotation(currentDependencyVersion: String): Boolean {
         try {
-            val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file)
+            val tmpDir = codeTransformationSession?.getHilTempDirectoryPath()
+            val pomFilePath = tmpDir?.resolve("dependency-report/pom.xml").toString()
+            val virtualFile = LocalFileSystem.getInstance().findFileByPath(pomFilePath)
             if (virtualFile != null) {
                 var lineNumberToHighlight = findLineNumberByString(virtualFile, "<version>$currentDependencyVersion</version>")
                 val pomFileAnnotator = PomFileAnnotator(project, virtualFile, lineNumberToHighlight)
