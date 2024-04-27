@@ -9,8 +9,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -47,16 +45,14 @@ class PomFileAnnotator(private val project: Project, private var virtualFile: Vi
 
     fun showCustomEditor() {
         runInEdt {
-            val isReadOnlyFile = true
             val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: throw Error("No document found")
-            val editor = EditorFactory.getInstance().createEditor(document, project, virtualFile, isReadOnlyFile)
             markupModel = DocumentMarkupModel.forDocument(document, project, false)
 
             // We open the file for the user to see
             openVirtualFile()
 
             // We apply the editor changes to file
-            addGutterIconToLine(editor, document, lineNumberToHighlight ?: 0)
+            addGutterIconToLine(document, lineNumberToHighlight ?: 1)
         }
     }
 
@@ -66,7 +62,7 @@ class PomFileAnnotator(private val project: Project, private var virtualFile: Vi
         fileEditorManager.openTextEditor(openFileDescription, true)
     }
 
-    fun addGutterIconToLine(editor: Editor, document: Document, lineNumberToHighlight: Int) {
+    fun addGutterIconToLine(document: Document, lineNumberToHighlight: Int) {
         val gutterIconRenderer = object : GutterIconRenderer() {
             override fun equals(other: Any?): Boolean = true
 
@@ -97,8 +93,8 @@ class PomFileAnnotator(private val project: Project, private var virtualFile: Vi
         )
 
         // Define your action availability hint
-        val startOffset = document.getLineStartOffset(lineNumberToHighlight - 1)
-        val endOffset = document.getLineEndOffset(lineNumberToHighlight - 1)
+        val startOffset = document.getLineStartOffset(lineNumberToHighlight)
+        val endOffset = document.getLineEndOffset(lineNumberToHighlight)
 
         markupModel?.apply {
             val highlighter = addRangeHighlighter(

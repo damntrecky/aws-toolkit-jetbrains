@@ -213,6 +213,12 @@ export class CodeTransformChatConnector {
                 tabID,
                 tabType: 'codetransform',
             })
+        } else if (action.id === FormButtonIds.OpenPomFileHilClicked) {
+            this.sendMessageToExtension({
+                command: 'codetransform-open-pom-file-hil-clicked',
+                tabID,
+                tabType: 'codetransform',
+            })
         }
     }
 

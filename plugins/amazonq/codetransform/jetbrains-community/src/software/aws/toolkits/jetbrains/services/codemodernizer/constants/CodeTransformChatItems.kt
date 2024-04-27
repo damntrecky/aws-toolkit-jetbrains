@@ -84,7 +84,7 @@ private val rejectHilSelectionButton = Button(
 // TODO HIL selection cancel button
 
 private val openDependencyErrorPomFileButton = Button(
-    id = CodeTransformButtonId.OpenDependencyErrorPom.id,
+    id = CodeTransformButtonId.OpenPomFileHilClicked.id,
     text = message("codemodernizer.chat.message.button.open_file"),
     keepCardAfterClick = true,
 )

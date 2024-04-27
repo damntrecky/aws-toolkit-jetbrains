@@ -39,6 +39,7 @@ type MessageCommand =
     | 'codetransform-view-summary'
     | 'codetransform-confirm-hil-selection'
     | 'codetransform-reject-hil-selection'
+    | 'codetransform-open-pom-file-hil-clicked'
     | 'file-click'
 
 export type ExtensionMessage = Record<string, any> & { command: MessageCommand }

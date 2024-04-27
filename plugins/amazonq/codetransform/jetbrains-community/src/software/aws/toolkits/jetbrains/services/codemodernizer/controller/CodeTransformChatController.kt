@@ -407,7 +407,7 @@ class CodeTransformChatController(
             hilTryResumeAfterError("Cannot find other versions locally for the dependency.")
             return
         }
-        codeModernizerManager.showHilPomFileAnnotation(hilDownloadArtifact.pomFile, hilDownloadArtifact.manifest.sourcePomVersion)
+        codeModernizerManager.showHilPomFileAnnotation(hilDownloadArtifact.manifest.sourcePomVersion)
         val dependency = codeModernizerManager.findAvailableVersionForDependency(
             hilDownloadArtifact.manifest.pomGroupId,
             hilDownloadArtifact.manifest.pomArtifactId
@@ -485,7 +485,7 @@ class CodeTransformChatController(
         try {
             val hilDownloadArtifact = codeModernizerManager.getArtifactForHil()
             if (hilDownloadArtifact != null) {
-                codeModernizerManager.showHilPomFileAnnotation(hilDownloadArtifact.pomFile, hilDownloadArtifact.manifest.sourcePomVersion)
+                codeModernizerManager.showHilPomFileAnnotation(hilDownloadArtifact.manifest.sourcePomVersion)
             }
         } catch (e: Exception) {
             // TODO error handling

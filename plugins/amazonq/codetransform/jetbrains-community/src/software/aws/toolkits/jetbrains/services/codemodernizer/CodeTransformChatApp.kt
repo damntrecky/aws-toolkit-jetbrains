@@ -40,7 +40,7 @@ private enum class CodeTransformMessageTypes(val type: String) {
     BodyLinkClicked("response-body-link-click"),
     ConfirmHilSelection("codetransform-confirm-hil-selection"),
     RejectHilSelection("codetransform-reject-hil-selection"),
-    OpenPomFileHilClicked("codetransform-pom-file-open-clic"),
+    OpenPomFileHilClicked("codetransform-open-pom-file-hil-clicked"),
 }
 
 class CodeTransformChatApp : AmazonQApp {
