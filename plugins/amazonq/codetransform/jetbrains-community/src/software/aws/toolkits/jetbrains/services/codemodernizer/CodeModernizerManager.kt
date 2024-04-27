@@ -234,14 +234,6 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
     fun runModernize(copyResult: MavenCopyCommandsResult) {
         initStopParameters()
         val session = codeTransformationSession as CodeModernizerSession
-        /*
-        val fakeJobId = JobId("test-id")
-        completeHumanInTheLoopWork(fakeJobId, 0)
-        val test = true
-        if (test) {
-            return
-        }
-         */
         initModernizationJobUI(true, project.getModuleOrProjectNameForFile(session.sessionContext.configurationFile))
         launchModernizationJob(session, copyResult)
     }
