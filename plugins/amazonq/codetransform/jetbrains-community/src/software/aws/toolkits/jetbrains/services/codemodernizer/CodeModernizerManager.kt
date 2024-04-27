@@ -17,9 +17,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil.createTempDirectory
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import software.amazon.awssdk.services.codewhispererruntime.model.TransformationJob
@@ -457,7 +455,6 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
             return
         }
 
-
         // https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html#write-access
         ApplicationManager.getApplication().invokeLater {
             // TODO handle paused
@@ -789,10 +786,12 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
 
     fun findAvailableVersionForDependency(pomGroupId: String, pomArtifactId: String): Dependency? {
         try {
-            val report = parseXmlDependenciesReport(codeTransformationSession?.getHilTempDirectoryPath()!!.resolve("dependency-report/target/dependency-updates-aggregate-report.xml"))
+            val report = parseXmlDependenciesReport(
+                codeTransformationSession?.getHilTempDirectoryPath()!!.resolve("dependency-report/target/dependency-updates-aggregate-report.xml")
+            )
             return report.dependencies?.first {
-                it.groupId == pomGroupId
-                    && it.artifactId == pomArtifactId
+                it.groupId == pomGroupId &&
+                    it.artifactId == pomArtifactId
             }
         } catch (e: Exception) {
             // TODO log error
@@ -836,13 +835,13 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
         try {
             val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file)
             if (virtualFile != null) {
-                var lineNumberToHighlight = findLineNumberByString(virtualFile, "<version>${currentDependencyVersion}</version>")
+                var lineNumberToHighlight = findLineNumberByString(virtualFile, "<version>$currentDependencyVersion</version>")
                 val pomFileAnnotator = PomFileAnnotator(project, virtualFile, lineNumberToHighlight)
                 pomFileAnnotator.showCustomEditor() // opens editor using Edt thread
             } else {
                 return false
             }
-        } catch(e: Exception) {
+        } catch (e: Exception) {
             LOG.error(e.message)
             return false
         }
@@ -851,24 +850,24 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
     }
 
     suspend fun tryResumeWithAlternativeVersion(selectedVersion: String) {
-            try {
-                val zipCreationResult = codeTransformationSession?.createHilUploadZip(selectedVersion)
-                if (zipCreationResult?.payload?.exists() == true) {
-                    val result = codeTransformationSession?.uploadHilPayload(zipCreationResult.payload)
-                    LOG.info(result)
-                    delay(500)
+        try {
+            val zipCreationResult = codeTransformationSession?.createHilUploadZip(selectedVersion)
+            if (zipCreationResult?.payload?.exists() == true) {
+                val result = codeTransformationSession?.uploadHilPayload(zipCreationResult.payload)
+                LOG.info(result)
+                delay(500)
 
-                    val result2 = codeTransformationSession?.resumeTransformFromHil()
-                    LOG.info(result2.toString())
-                } else {
-                    // TOOD handle error
-                }
-            } catch (e: Exception) {
-                LOG.error(e.message)
-                // TODO error handling
-            } finally {
-                // DO file clean up
-                codeTransformationSession?.hilTempFilesCleanup()
+                val result2 = codeTransformationSession?.resumeTransformFromHil()
+                LOG.info(result2.toString())
+            } else {
+                // TOOD handle error
             }
+        } catch (e: Exception) {
+            LOG.error(e.message)
+            // TODO error handling
+        } finally {
+            // DO file clean up
+            codeTransformationSession?.hilTempFilesCleanup()
+        }
     }
 }

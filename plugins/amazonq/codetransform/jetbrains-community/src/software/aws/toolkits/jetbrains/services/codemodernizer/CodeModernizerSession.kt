@@ -108,11 +108,17 @@ class CodeModernizerSession(
     fun getDependenciesUsingMaven(): MavenCopyCommandsResult = sessionContext.getDependenciesUsingMaven()
 
     // TODO path to const
-    fun createHilDependencyReportUsingMaven(): MavenDependencyReportCommandsResult = sessionContext.createDependencyReportUsingMaven(hilTempDirectoryPath!!.resolve("dependency-report"))
+    fun createHilDependencyReportUsingMaven(): MavenDependencyReportCommandsResult = sessionContext.createDependencyReportUsingMaven(
+        hilTempDirectoryPath!!.resolve("dependency-report")
+    )
 
     fun copyHilDependencyUsingMaven(): MavenCopyCommandsResult = sessionContext.copyHilDependencyUsingMaven(hilTempDirectoryPath!!)
 
-    fun createHilUploadZip(selectedVersion: String) = sessionContext.createZipForHilUpload(hilTempDirectoryPath!!, hilDownloadArtifact!!.manifest, selectedVersion)
+    fun createHilUploadZip(selectedVersion: String) = sessionContext.createZipForHilUpload(
+        hilTempDirectoryPath!!,
+        hilDownloadArtifact!!.manifest,
+        selectedVersion
+    )
 
     /**
      * Note that this function makes network calls and needs to be run from a background thread.
@@ -165,7 +171,7 @@ class CodeModernizerSession(
                 LOG.warn { "Job was cancelled by user before upload was called" }
                 return CodeModernizerStartJobResult.Cancelled
             }
-            //val uploadId = uploadPayloadMock(payload)
+            // val uploadId = uploadPayloadMock(payload)
             val uploadId = uploadPayload(payload)
             if (shouldStop.get()) {
                 LOG.warn { "Job was cancelled by user before start job was called" }
@@ -215,7 +221,7 @@ class CodeModernizerSession(
         }
         LOG.info { "Starting job with uploadId [$uploadId] for $sourceLanguage -> $targetLanguage" }
         // TODO mock return paused job ID
-        //return clientAdaptor.startCodeModernizationMock(uploadId, sourceLanguage, targetLanguage)
+        // return clientAdaptor.startCodeModernizationMock(uploadId, sourceLanguage, targetLanguage)
         return clientAdaptor.startCodeModernization(uploadId, sourceLanguage, targetLanguage)
     }
 
@@ -350,7 +356,7 @@ class CodeModernizerSession(
 
             // add delay to avoid the throttling error
             // TODO change back
-            //delay(100)
+            // delay(100)
             delay(1000)
 
             var isTransformationPlanEditorOpened = false

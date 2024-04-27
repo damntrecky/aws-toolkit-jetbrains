@@ -184,6 +184,7 @@ class GumbyClient(private val project: Project) {
         val request = GetTransformationPlanRequest.builder().transformationJobId(jobId.id).build()
         return callApi({ bearerClient().getTransformationPlan(request) }, apiName = CodeTransformApiNames.GetTransformationPlan, jobId = jobId.id)
     }
+
     // TODO remove
     fun getCodeModernizationPlanMock(jobId: JobId, count: Int): GetTransformationPlanResponse {
         val plan1 = TransformationPlan.builder().transformationSteps(
@@ -191,7 +192,9 @@ class GumbyClient(private val project: Project) {
                 TransformationStep.builder()
                     .id("1")
                     .name("Step 1 - Update dependencies and code")
-                    .description("Q will update mandatory package dependencies and frameworks. Also, where required for compatability with Java 17, it will replace deprecated code with working code.")
+                    .description(
+                        "Q will update mandatory package dependencies and frameworks. Also, where required for compatability with Java 17, it will replace deprecated code with working code."
+                    )
                     .status("CREATED")
                     .progressUpdates(listOf())
                     .build(),
@@ -205,7 +208,9 @@ class GumbyClient(private val project: Project) {
                 TransformationStep.builder()
                     .id("3")
                     .name("Step 3 - Finalize code changes and generate transformation summary")
-                    .description("Q will generate code changes for you to review and accept. It will also summarize the changes made, and will copy over build logs for future reference and troubleshooting.")
+                    .description(
+                        "Q will generate code changes for you to review and accept. It will also summarize the changes made, and will copy over build logs for future reference and troubleshooting."
+                    )
                     .status("CREATED")
                     .progressUpdates(listOf())
                     .build(),
@@ -217,7 +222,9 @@ class GumbyClient(private val project: Project) {
                 TransformationStep.builder()
                     .id("1")
                     .name("Step 1 - Update dependencies and code")
-                    .description("Q will update mandatory package dependencies and frameworks. Also, where required for compatability with Java 17, it will replace deprecated code with working code.")
+                    .description(
+                        "Q will update mandatory package dependencies and frameworks. Also, where required for compatability with Java 17, it will replace deprecated code with working code."
+                    )
                     .status("CREATED")
                     .progressUpdates(
                         TransformationProgressUpdate
@@ -240,7 +247,9 @@ class GumbyClient(private val project: Project) {
                 TransformationStep.builder()
                     .id("3")
                     .name("Step 3 - Finalize code changes and generate transformation summary")
-                    .description("Q will generate code changes for you to review and accept. It will also summarize the changes made, and will copy over build logs for future reference and troubleshooting.")
+                    .description(
+                        "Q will generate code changes for you to review and accept. It will also summarize the changes made, and will copy over build logs for future reference and troubleshooting."
+                    )
                     .status("CREATED")
                     .progressUpdates(listOf())
                     .build(),
@@ -252,7 +261,9 @@ class GumbyClient(private val project: Project) {
                 TransformationStep.builder()
                     .id("1")
                     .name("Step 1 - Update dependencies and code")
-                    .description("Q will update mandatory package dependencies and frameworks. Also, where required for compatability with Java 17, it will replace deprecated code with working code.")
+                    .description(
+                        "Q will update mandatory package dependencies and frameworks. Also, where required for compatability with Java 17, it will replace deprecated code with working code."
+                    )
                     .status("CREATED")
                     .progressUpdates(
                         TransformationProgressUpdate
@@ -283,7 +294,9 @@ class GumbyClient(private val project: Project) {
                 TransformationStep.builder()
                     .id("3")
                     .name("Step 3 - Finalize code changes and generate transformation summary")
-                    .description("Q will generate code changes for you to review and accept. It will also summarize the changes made, and will copy over build logs for future reference and troubleshooting.")
+                    .description(
+                        "Q will generate code changes for you to review and accept. It will also summarize the changes made, and will copy over build logs for future reference and troubleshooting."
+                    )
                     .status("CREATED")
                     .progressUpdates(listOf())
                     .build(),
@@ -295,7 +308,9 @@ class GumbyClient(private val project: Project) {
                 TransformationStep.builder()
                     .id("1")
                     .name("Step 1 - Update dependencies and code")
-                    .description("Q will update mandatory package dependencies and frameworks. Also, where required for compatability with Java 17, it will replace deprecated code with working code.")
+                    .description(
+                        "Q will update mandatory package dependencies and frameworks. Also, where required for compatability with Java 17, it will replace deprecated code with working code."
+                    )
                     .status("CREATED")
                     .progressUpdates(
                         TransformationProgressUpdate
@@ -313,13 +328,15 @@ class GumbyClient(private val project: Project) {
                             .description("Compile Failed. Error encountered for dependency incompatibility. Paused to get user input.")
                             .startTime(Instant.parse("2024-04-16T04:27:23.223Z"))
                             .endTime(Instant.parse("2024-04-16T04:29:53.836Z"))
-                            .downloadArtifacts(listOf(
-                                TransformationDownloadArtifact
-                                    .builder()
-                                    .downloadArtifactType("CLIENT_INSTRUCTIONS")
-                                    .downloadArtifactId("someID")
-                                    .build()
-                            ))
+                            .downloadArtifacts(
+                                listOf(
+                                    TransformationDownloadArtifact
+                                        .builder()
+                                        .downloadArtifactType("CLIENT_INSTRUCTIONS")
+                                        .downloadArtifactId("someID")
+                                        .build()
+                                )
+                            )
                             .build()
                     )
                     .startTime(Instant.parse("2024-04-16T04:26:51.471Z"))
@@ -334,7 +351,9 @@ class GumbyClient(private val project: Project) {
                 TransformationStep.builder()
                     .id("3")
                     .name("Step 3 - Finalize code changes and generate transformation summary")
-                    .description("Q will generate code changes for you to review and accept. It will also summarize the changes made, and will copy over build logs for future reference and troubleshooting.")
+                    .description(
+                        "Q will generate code changes for you to review and accept. It will also summarize the changes made, and will copy over build logs for future reference and troubleshooting."
+                    )
                     .status("CREATED")
                     .progressUpdates(listOf())
                     .build(),
@@ -345,8 +364,6 @@ class GumbyClient(private val project: Project) {
 
         return GetTransformationPlanResponse.builder().transformationPlan(plans[count.coerceAtMost(plans.lastIndex)]).build()
     }
-
-
 
     fun stopTransformation(transformationJobId: String): StopTransformationResponse {
         val request = StopTransformationRequest.builder().transformationJobId(transformationJobId).build()
@@ -398,7 +415,9 @@ class GumbyClient(private val project: Project) {
     suspend fun downloadExportResultArchive2(jobId: JobId, downloadArtifactId: String): MutableList<ByteArray> = amazonQStreamingClient.exportResultArchive(
         jobId.id,
         ExportIntent.TRANSFORMATION,
-        ExportContext.builder().transformationExportContext(TransformationExportContext.builder().downloadArtifactId(downloadArtifactId).downloadArtifactType("ClientInstructions").build()).build(),
+        ExportContext.builder().transformationExportContext(
+            TransformationExportContext.builder().downloadArtifactId(downloadArtifactId).downloadArtifactType("ClientInstructions").build()
+        ).build(),
         { e ->
             LOG.error(e) { "${CodeTransformApiNames.ExportResultArchive} failed: ${e.message}" }
             telemetry.apiError(e.localizedMessage, CodeTransformApiNames.ExportResultArchive, jobId.id)

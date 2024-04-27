@@ -6,7 +6,6 @@ package software.aws.toolkits.jetbrains.services.codemodernizer
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil.createTempDirectory
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog
@@ -43,7 +42,6 @@ class ArtifactHandler(private val project: Project, private val clientAdaptor: G
     private val downloadedSummaries = mutableMapOf<JobId, TransformationSummary>()
 
     // TODO add manifest add pom path
-
 
     private var isCurrentlyDownloading = AtomicBoolean(false)
     internal suspend fun displayDiff(job: JobId) {

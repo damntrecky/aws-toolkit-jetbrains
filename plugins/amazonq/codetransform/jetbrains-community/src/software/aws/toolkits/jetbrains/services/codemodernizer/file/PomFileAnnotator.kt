@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.JBColor
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.CodeModernizerUIConstants.Companion.getLightYellowThemeBackgroundColor
+import software.aws.toolkits.resources.message
 import java.awt.Color
 import java.awt.Font
 import javax.swing.Icon
@@ -67,36 +68,24 @@ class PomFileAnnotator(private val project: Project, private var virtualFile: Vi
 
     fun addGutterIconToLine(editor: Editor, document: Document, lineNumberToHighlight: Int) {
         val gutterIconRenderer = object : GutterIconRenderer() {
-            override fun equals(other: Any?): Boolean {
-                return true
-            }
+            override fun equals(other: Any?): Boolean = true
 
-            override fun hashCode(): Int {
-                return javaClass.hashCode()
-            }
+            override fun hashCode(): Int = javaClass.hashCode()
 
             override fun getIcon(): Icon {
                 val scaledIcon = AllIcons.General.BalloonWarning
                 return scaledIcon
             }
 
-            override fun getTooltipText(): String {
-                return "Amazon Q experienced an issue upgrading this dependency version. Use Amazon Q chat to upgrade the version of this dependency to a Java 17 compatible version."
-            }
+            override fun getTooltipText(): String = message("codemodernizer.file.invalid_pom_version")
 
-            override fun isNavigateAction(): Boolean {
-                return false
-            }
+            override fun isNavigateAction(): Boolean = false
 
             override fun getClickAction(): AnAction = emptyAction
 
-            override fun getPopupMenuActions(): ActionGroup? {
-                return null
-            }
+            override fun getPopupMenuActions(): ActionGroup? = null
 
-            override fun getAlignment(): Alignment {
-                return Alignment.LEFT
-            }
+            override fun getAlignment(): Alignment = Alignment.LEFT
         }
 
         val highlighterAttributes = TextAttributes(
@@ -122,7 +111,7 @@ class PomFileAnnotator(private val project: Project, private var virtualFile: Vi
 
             // Optionally, you can customize the range highlighter further
             highlighter.errorStripeMarkColor = JBColor(JBColor.RED, Color.RED)
-            highlighter.errorStripeTooltip = "Amazon Q experienced an issue upgrading this dependency version. This dependency is not compatible with a Java 17 upgrade. Use Amazon Q chat to upgrade the version of this dependency to a Java 17 compatible version."
+            highlighter.errorStripeTooltip = message("codemodernizer.file.invalid_pom_version")
             highlighter.gutterIconRenderer = gutterIconRenderer
         }
     }

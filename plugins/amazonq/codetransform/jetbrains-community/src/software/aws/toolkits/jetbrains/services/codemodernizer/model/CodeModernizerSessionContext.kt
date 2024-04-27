@@ -79,12 +79,18 @@ data class CodeModernizerSessionContext(
 
     fun executeMavenCopyCommands(sourceFolder: File, buildLogBuilder: StringBuilder) = runMavenCopyCommands(sourceFolder, buildLogBuilder, LOG, project)
 
-    fun executeHilMavenCopyDependency(sourceFolder: File, destinationFolder: File, buildLogBuilder: StringBuilder) = runHilMavenCopyDependency(sourceFolder, destinationFolder, buildLogBuilder, LOG, project)
+    fun executeHilMavenCopyDependency(sourceFolder: File, destinationFolder: File, buildLogBuilder: StringBuilder) = runHilMavenCopyDependency(
+        sourceFolder,
+        destinationFolder,
+        buildLogBuilder,
+        LOG,
+        project
+    )
 
     // TODO return type
     fun copyHilDependencyUsingMaven(hilTepDirPath: Path): MavenCopyCommandsResult {
         val sourceFolder = File(hilTepDirPath.resolve("q-hil-dependency-artifacts/pomFolder").pathString)
-        val destinationFolder = Files.createDirectories(hilTepDirPath.resolve( "dependencies-root")).toFile()
+        val destinationFolder = Files.createDirectories(hilTepDirPath.resolve("dependencies-root")).toFile()
         val buildLogBuilder = StringBuilder("Starting Build Log...\n")
 
         // TODO handle cancel
@@ -104,9 +110,12 @@ data class CodeModernizerSessionContext(
         val buildLogBuilder = StringBuilder("Starting Build Log...\n")
         return executeDependencyVersionReportUsingMaven(sourceFolder, buildLogBuilder)
     }
-    private fun executeDependencyVersionReportUsingMaven(sourceFolder: File, buildLogBuilder: StringBuilder) = runDependencyReportCommands(sourceFolder, buildLogBuilder, LOG, project)
+    private fun executeDependencyVersionReportUsingMaven(
+        sourceFolder: File,
+        buildLogBuilder: StringBuilder
+    ) = runDependencyReportCommands(sourceFolder, buildLogBuilder, LOG, project)
 
-    fun createZipForHilUpload(hilTempPath: Path, manifest:CodeTransformHilDownloadManifest, targetVersion: String): ZipCreationResult {
+    fun createZipForHilUpload(hilTempPath: Path, manifest: CodeTransformHilDownloadManifest, targetVersion: String): ZipCreationResult {
         return runReadAction {
             try {
                 val depRootPath = hilTempPath.resolve("dependencies-root")
@@ -118,14 +127,16 @@ data class CodeModernizerSessionContext(
 
                 val file = Files.createFile(hilTempPath.resolve("hilUpload.zip"))
                 ZipOutputStream(Files.newOutputStream(file)).use { zip ->
-                    mapper.writeValueAsString(CodeTransformHilUploadManifest(
-                        hilInput = HilInput(
-                            dependenciesRoot = "dependenciesRoot/",
-                            pomGroupId = manifest.pomGroupId,
-                            pomArtifactId = manifest.pomArtifactId,
-                            targetPomVersion = targetVersion,
+                    mapper.writeValueAsString(
+                        CodeTransformHilUploadManifest(
+                            hilInput = HilInput(
+                                dependenciesRoot = "dependenciesRoot/",
+                                pomGroupId = manifest.pomGroupId,
+                                pomArtifactId = manifest.pomArtifactId,
+                                targetPomVersion = targetVersion,
+                            )
                         )
-                    ))
+                    )
                         .byteInputStream()
                         .use {
                             zip.putNextEntry("manifest.json", it)

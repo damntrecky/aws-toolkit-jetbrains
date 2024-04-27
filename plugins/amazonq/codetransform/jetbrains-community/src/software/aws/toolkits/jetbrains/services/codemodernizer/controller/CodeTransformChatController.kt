@@ -24,14 +24,13 @@ import software.aws.toolkits.jetbrains.services.codemodernizer.commands.CodeTran
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.FEATURE_NAME
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildCheckingValidProjectChatContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildCompileHilAlternativeVersionContent
-import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildHilResumedContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildCompileLocalFailedChatContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildCompileLocalInProgressChatContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildCompileLocalSuccessChatContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildHilErrorContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildHilInitialContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildHilRejectContent
-import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildHilResumedFromRejectContent
+import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildHilResumedContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildProjectInvalidChatContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildProjectValidChatContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildStartNewTransformFollowup
@@ -48,7 +47,6 @@ import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildUs
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildUserInputChatContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildUserSelectionSummaryChatContent
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.buildUserStopTransformChatContent
-import software.aws.toolkits.jetbrains.services.codemodernizer.file.PomFileAnnotator
 import software.aws.toolkits.jetbrains.services.codemodernizer.messages.AuthenticationNeededExceptionMessage
 import software.aws.toolkits.jetbrains.services.codemodernizer.messages.CodeTransformChatMessage
 import software.aws.toolkits.jetbrains.services.codemodernizer.messages.CodeTransformCommandMessage
@@ -410,7 +408,10 @@ class CodeTransformChatController(
             return
         }
         codeModernizerManager.showHilPomFileAnnotation(hilDownloadArtifact.pomFile, hilDownloadArtifact.manifest.sourcePomVersion)
-        val dependency = codeModernizerManager.findAvailableVersionForDependency(hilDownloadArtifact.manifest.pomGroupId, hilDownloadArtifact.manifest.pomArtifactId)
+        val dependency = codeModernizerManager.findAvailableVersionForDependency(
+            hilDownloadArtifact.manifest.pomGroupId,
+            hilDownloadArtifact.manifest.pomArtifactId
+        )
         if (dependency == null || (dependency.majors.isNullOrEmpty() && dependency.minors.isNullOrEmpty() && dependency.incrementals.isNullOrEmpty())) {
             hilTryResumeAfterError("Cannot find other versions locally for the dependency.")
             return
