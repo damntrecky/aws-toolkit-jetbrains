@@ -101,7 +101,6 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
     private val isResumingJob = AtomicBoolean(false)
     private val isMvnRunning = AtomicBoolean(false)
     private val isJobSuccessfullyResumed = AtomicBoolean(false)
-    private val isHilInProgress = AtomicBoolean(false)
 
     private val transformationStoppedByUsr = AtomicBoolean(false)
     private var codeTransformationSession: CodeModernizerSession? = null

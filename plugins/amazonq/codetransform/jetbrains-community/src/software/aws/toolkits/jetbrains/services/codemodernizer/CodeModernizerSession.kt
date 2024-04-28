@@ -243,10 +243,6 @@ class CodeModernizerSession(
      */
     fun resumeJob(startTime: Instant, jobId: JobId) = state.putJobHistory(sessionContext, TransformationStatus.STARTED, jobId.id, startTime)
 
-    fun uploadPayloadMock(payload: File): String {
-        return "upload-ID"
-    }
-
     fun resumeTransformFromHil() {
         val clientAdaptor = GumbyClient.getInstance(sessionContext.project)
         clientAdaptor.resumeCodeTransformation(state.currentJobId!!, TransformationUserActionStatus.COMPLETED)

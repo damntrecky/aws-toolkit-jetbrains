@@ -394,7 +394,7 @@ class CodeTransformChatController(
 
         hilDownloadArtifact = codeModernizerManager.getArtifactForHil()
 
-        if (hilDownloadArtifact!! == null) {
+        if (hilDownloadArtifact == null) {
             hilTryResumeAfterError("Cannot download dependency info.")
             return
         }
@@ -409,7 +409,6 @@ class CodeTransformChatController(
             hilTryResumeAfterError("Cannot find other versions locally for the dependency.")
             return
         }
-        codeModernizerManager.showHilPomFileAnnotation(hilDownloadArtifact!!.manifest.sourcePomVersion)
         val dependency = codeModernizerManager.findAvailableVersionForDependency(
             hilDownloadArtifact!!.manifest.pomGroupId,
             hilDownloadArtifact!!.manifest.pomArtifactId
@@ -418,6 +417,7 @@ class CodeTransformChatController(
             hilTryResumeAfterError("Cannot find other versions locally for the dependency.")
             return
         }
+        codeModernizerManager.showHilPomFileAnnotation(hilDownloadArtifact!!.manifest.sourcePomVersion)
         codeTransformChatHelper.updateLastPendingMessage(buildTransformAwaitUserInputChatContent(dependency))
         runInEdt {
             codeModernizerManager.getBottomToolWindow().show()
