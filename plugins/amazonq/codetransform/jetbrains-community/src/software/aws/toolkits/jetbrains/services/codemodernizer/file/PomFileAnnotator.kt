@@ -93,8 +93,8 @@ class PomFileAnnotator(private val project: Project, private var virtualFile: Vi
         )
 
         // Define your action availability hint
-        val startOffset = document.getLineStartOffset(lineNumberToHighlight)
-        val endOffset = document.getLineEndOffset(lineNumberToHighlight)
+        val startOffset = document.getLineStartOffset(lineNumberToHighlight - 1)
+        val endOffset = document.getLineEndOffset(lineNumberToHighlight - 1)
 
         markupModel?.apply {
             val highlighter = addRangeHighlighter(

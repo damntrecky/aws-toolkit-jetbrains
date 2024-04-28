@@ -52,6 +52,7 @@ import software.aws.toolkits.jetbrains.services.codemodernizer.messages.CodeTran
 import software.aws.toolkits.jetbrains.services.codemodernizer.messages.CodeTransformCommandMessage
 import software.aws.toolkits.jetbrains.services.codemodernizer.messages.IncomingCodeTransformMessage
 import software.aws.toolkits.jetbrains.services.codemodernizer.model.CodeModernizerJobCompletedResult
+import software.aws.toolkits.jetbrains.services.codemodernizer.model.CodeTransformHilDownloadArtifact
 import software.aws.toolkits.jetbrains.services.codemodernizer.model.CustomerSelection
 import software.aws.toolkits.jetbrains.services.codemodernizer.model.JobId
 import software.aws.toolkits.jetbrains.services.codemodernizer.model.MavenCopyCommandsResult
@@ -74,6 +75,7 @@ class CodeTransformChatController(
     private val codeModernizerManager = CodeModernizerManager.getInstance(context.project)
     private val codeTransformChatHelper = CodeTransformChatHelper(context.messagesFromAppToUi, chatSessionStorage)
     private val artifactHandler = ArtifactHandler(context.project, GumbyClient.getInstance(context.project))
+    private var hilDownloadArtifact: CodeTransformHilDownloadArtifact? = null
 
     override suspend fun processTransformQuickAction(message: IncomingCodeTransformMessage.Transform) {
         if (!checkForAuth(message.tabId)) {
@@ -390,16 +392,16 @@ class CodeTransformChatController(
     private suspend fun handleHil() {
         codeTransformChatHelper.updateLastPendingMessage(buildHilInitialContent())
 
-        val hilDownloadArtifact = codeModernizerManager.getArtifactForHil()
+        hilDownloadArtifact = codeModernizerManager.getArtifactForHil()
 
-        if (hilDownloadArtifact == null) {
+        if (hilDownloadArtifact!! == null) {
             hilTryResumeAfterError("Cannot download dependency info.")
             return
         }
 
-        codeTransformChatHelper.addNewMessage(buildTransformDependencyErrorChatContent(hilDownloadArtifact))
+        codeTransformChatHelper.addNewMessage(buildTransformDependencyErrorChatContent(hilDownloadArtifact!!))
         codeTransformChatHelper.addNewMessage(buildTransformFindingLocalAlternativeDependencyChatContent())
-        val createReportResult = codeModernizerManager.createDependencyReport(hilDownloadArtifact)
+        val createReportResult = codeModernizerManager.createDependencyReport(hilDownloadArtifact!!)
         if (createReportResult == MavenDependencyReportCommandsResult.Cancelled) {
             hilTryResumeAfterError("Cancelled local dependency look up.")
             return
@@ -407,10 +409,10 @@ class CodeTransformChatController(
             hilTryResumeAfterError("Cannot find other versions locally for the dependency.")
             return
         }
-        codeModernizerManager.showHilPomFileAnnotation(hilDownloadArtifact.manifest.sourcePomVersion)
+        codeModernizerManager.showHilPomFileAnnotation(hilDownloadArtifact!!.manifest.sourcePomVersion)
         val dependency = codeModernizerManager.findAvailableVersionForDependency(
-            hilDownloadArtifact.manifest.pomGroupId,
-            hilDownloadArtifact.manifest.pomArtifactId
+            hilDownloadArtifact!!.manifest.pomGroupId,
+            hilDownloadArtifact!!.manifest.pomArtifactId
         )
         if (dependency == null || (dependency.majors.isNullOrEmpty() && dependency.minors.isNullOrEmpty() && dependency.incrementals.isNullOrEmpty())) {
             hilTryResumeAfterError("Cannot find other versions locally for the dependency.")
@@ -483,9 +485,8 @@ class CodeTransformChatController(
         }
 
         try {
-            val hilDownloadArtifact = codeModernizerManager.getArtifactForHil()
             if (hilDownloadArtifact != null) {
-                codeModernizerManager.showHilPomFileAnnotation(hilDownloadArtifact.manifest.sourcePomVersion)
+                codeModernizerManager.showHilPomFileAnnotation(hilDownloadArtifact!!.manifest.sourcePomVersion)
             }
         } catch (e: Exception) {
             // TODO error handling
