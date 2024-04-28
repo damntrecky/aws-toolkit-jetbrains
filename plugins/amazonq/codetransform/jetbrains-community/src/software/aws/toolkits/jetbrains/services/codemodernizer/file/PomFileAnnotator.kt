@@ -37,10 +37,10 @@ class PomFileAnnotator(private val project: Project, private var virtualFile: Vi
     }
 
     fun showCustomEditor() {
-        val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: throw Error("No document found")
-        markupModel = forDocument(document, project, false)
         runInEdt {
-            markupModel.removeAllHighlighters()
+            val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: throw Error("No document found")
+            markupModel = forDocument(document, project, false)
+            markupModel.removeAllHighlighters() // remove all highlighters from previous opens
             openVirtualFile()
             // We apply the editor changes to file
             addGutterIconToLine(document, lineNumberToHighlight ?: 1)
