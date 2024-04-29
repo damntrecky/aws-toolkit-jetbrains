@@ -383,7 +383,13 @@ class CodeModernizerSession(
 
                 // TODO explain the race condition
                 if (state.currentJobStatus == TransformationStatus.PAUSED) {
-                    val pausedUpdate = state.transformationPlan?.transformationSteps()?.flatMap { step -> step.progressUpdates() }?.filter { update -> update.status() == TransformationProgressUpdateStatus.PAUSED }
+                    val pausedUpdate = state.transformationPlan?.transformationSteps()?.flatMap {
+                            step ->
+                        step.progressUpdates()
+                    }?.filter {
+                            update ->
+                        update.status() == TransformationProgressUpdateStatus.PAUSED
+                    }
                     if (pausedUpdate?.isNotEmpty() == true) {
                         state.currentHilArtifactId = pausedUpdate[0].downloadArtifacts()[0].downloadArtifactId()
                     }

@@ -24,7 +24,13 @@ private fun emitMavenFailure(error: String, logger: Logger, telemetry: CodeTrans
     telemetry.mvnBuildFailed(CodeTransformMavenBuildCommand.IDEBundledMaven, error)
 }
 
-fun runHilMavenCopyDependency(sourceFolder: File, destinationDir: File, buildlogBuilder: StringBuilder, logger: Logger, project: Project): MavenCopyCommandsResult {
+fun runHilMavenCopyDependency(
+    sourceFolder: File,
+    destinationDir: File,
+    buildlogBuilder: StringBuilder,
+    logger: Logger,
+    project: Project
+): MavenCopyCommandsResult {
     val telemetry = CodeTransformTelemetryManager.getInstance(project)
     logger.info { "Executing IntelliJ bundled Maven" }
     try {

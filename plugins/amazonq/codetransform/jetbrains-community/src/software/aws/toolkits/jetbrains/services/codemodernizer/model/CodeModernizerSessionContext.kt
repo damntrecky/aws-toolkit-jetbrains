@@ -115,53 +115,51 @@ data class CodeModernizerSessionContext(
         buildLogBuilder: StringBuilder
     ) = runDependencyReportCommands(sourceFolder, buildLogBuilder, LOG, project)
 
-    fun createZipForHilUpload(hilTempPath: Path, manifest: CodeTransformHilDownloadManifest, targetVersion: String): ZipCreationResult {
-        return runReadAction {
-            try {
-                val depRootPath = hilTempPath.resolve("dependencies-root")
-                val depDirectory = File(depRootPath.pathString)
+    fun createZipForHilUpload(hilTempPath: Path, manifest: CodeTransformHilDownloadManifest, targetVersion: String): ZipCreationResult = runReadAction {
+        try {
+            val depRootPath = hilTempPath.resolve("dependencies-root")
+            val depDirectory = File(depRootPath.pathString)
 
-                val dependencyFiles = iterateThroughDependencies(depDirectory)
+            val dependencyFiles = iterateThroughDependencies(depDirectory)
 
-                val depSources = File("dependenciesRoot")
+            val depSources = File("dependenciesRoot")
 
-                val file = Files.createFile(hilTempPath.resolve("hilUpload.zip"))
-                ZipOutputStream(Files.newOutputStream(file)).use { zip ->
-                    mapper.writeValueAsString(
-                        CodeTransformHilUploadManifest(
-                            hilInput = HilInput(
-                                dependenciesRoot = "dependenciesRoot/",
-                                pomGroupId = manifest.pomGroupId,
-                                pomArtifactId = manifest.pomArtifactId,
-                                targetPomVersion = targetVersion,
-                            )
+            val file = Files.createFile(hilTempPath.resolve("hilUpload.zip"))
+            ZipOutputStream(Files.newOutputStream(file)).use { zip ->
+                mapper.writeValueAsString(
+                    CodeTransformHilUploadManifest(
+                        hilInput = HilInput(
+                            dependenciesRoot = "dependenciesRoot/",
+                            pomGroupId = manifest.pomGroupId,
+                            pomArtifactId = manifest.pomArtifactId,
+                            targetPomVersion = targetVersion,
                         )
                     )
-                        .byteInputStream()
-                        .use {
-                            zip.putNextEntry("manifest.json", it)
-                        }
+                )
+                    .byteInputStream()
+                    .use {
+                        zip.putNextEntry("manifest.json", it)
+                    }
 
-                    // 2) Dependencies
-                    dependencyFiles.forEach { depfile ->
-                        val relativePath = File(depfile.path).relativeTo(depDirectory)
-                        val paddedPath = depSources.resolve(relativePath)
-                        var paddedPathString = paddedPath.toPath().toString()
-                        // Convert Windows file path to work on Linux
-                        if (File.separatorChar != '/') {
-                            paddedPathString = paddedPathString.replace('\\', '/')
-                        }
-                        depfile.inputStream().use {
-                            zip.putNextEntry(paddedPathString, it)
-                        }
+                // 2) Dependencies
+                dependencyFiles.forEach { depfile ->
+                    val relativePath = File(depfile.path).relativeTo(depDirectory)
+                    val paddedPath = depSources.resolve(relativePath)
+                    var paddedPathString = paddedPath.toPath().toString()
+                    // Convert Windows file path to work on Linux
+                    if (File.separatorChar != '/') {
+                        paddedPathString = paddedPathString.replace('\\', '/')
+                    }
+                    depfile.inputStream().use {
+                        zip.putNextEntry(paddedPathString, it)
                     }
                 }
-
-                ZipCreationResult.Succeeded(file.toFile())
-            } catch (e: Exception) {
-                LOG.error(e) { e.message.toString() }
-                throw CodeModernizerException("Unknown exception occurred")
             }
+
+            ZipCreationResult.Succeeded(file.toFile())
+        } catch (e: Exception) {
+            LOG.error(e) { e.message.toString() }
+            throw CodeModernizerException("Unknown exception occurred")
         }
     }
 

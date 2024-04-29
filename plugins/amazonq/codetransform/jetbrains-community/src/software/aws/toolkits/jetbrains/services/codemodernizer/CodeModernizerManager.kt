@@ -369,8 +369,8 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
         }
     }
 
-    internal suspend fun initModernizationJob(session: CodeModernizerSession, copyResult: MavenCopyCommandsResult): CodeModernizerJobCompletedResult {
-        return when (val result = session.createModernizationJob(copyResult)) {
+    internal suspend fun initModernizationJob(session: CodeModernizerSession, copyResult: MavenCopyCommandsResult): CodeModernizerJobCompletedResult =
+        when (val result = session.createModernizationJob(copyResult)) {
             is CodeModernizerStartJobResult.ZipCreationFailed -> {
                 CodeModernizerJobCompletedResult.UnableToCreateJob(
                     message("codemodernizer.notification.warn.zip_creation_failed", result.reason),
@@ -405,7 +405,6 @@ class CodeModernizerManager(private val project: Project) : PersistentStateCompo
                 CodeModernizerJobCompletedResult.JobAbortedZipTooLarge
             }
         }
-    }
 
     // TODO handleJobResumed
     // Update codeModernizerBottomWindowPanelManager with resumed UI
